@@ -1,0 +1,38 @@
+# Frontend (Angular) — see the repository root .gitignore for repo-wide rules.
+#
+# Patterns here ARE rooted with a leading slash: they resolve against this
+# folder, so `/dist` means frontend/dist and cannot accidentally match a
+# `dist` further down the tree.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# Angular
+/.angular/cache
+.sass-cache/
+
+# Visual Studio Code
+# The four shared files are deliberately committed — they carry the recommended
+# extensions, debug launch config and build tasks for anyone who clones.
+/.vscode/*
+!/.vscode/settings.json
+!/.vscode/tasks.json
+!/.vscode/launch.json
+!/.vscode/extensions.json
+
+# Testing
+/coverage
+/libpeerconnection.log
+testem.log
+
+# Miscellaneous
+/connect.lock
+/typings

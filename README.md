@@ -1,27 +1,50 @@
 # NexusOne
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.9.
+Enterprise Operations Platform — people, projects, workflows, approvals,
+documents, assets, reporting and administration in one application.
 
-## Development server
+## Repository layout
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+```text
+nexus-one/
+├── frontend/     Angular 18 application (SSR + prerendering)
+├── backend/      Spring Boot service — not started yet
+└── docs/         Product, design and PRD documentation (git-ignored)
+```
 
-## Code scaffolding
+## Frontend
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+```bash
+cd frontend
+npm install
+npm start            # dev server on http://localhost:4200
+npm run build        # production build + prerender
+```
 
-## Build
+Angular 18 with SSR, Tailwind and Angular Material. State currently lives in
+in-memory fixture services under `frontend/src/app/core/`, so every screen is
+fully interactive without a backend. Those services are the seam the real API
+will replace — components read signals and never fetch directly.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+See [`frontend/README.md`](frontend/README.md) for the Angular CLI reference.
 
-## Running unit tests
+### What is built
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+All nine sidebar modules (Employees, Departments, Projects, Requests,
+Workflow, Assets, Documents, Reports, Analytics) with list, detail and
+create/edit screens, plus Dashboard, Audit Logs, Notifications, My Profile,
+Settings and a design-system page.
 
-## Running end-to-end tests
+Also: five switchable themes, a mock RBAC layer with eight roles, and a
+brand logo upload.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+## Backend
 
-## Further help
+Not started. See [`backend/README.md`](backend/README.md) for the intended
+shape and what the frontend expects.
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Status
+
+The frontend is UI-complete against the current PRDs and runs entirely on
+fixtures. Nothing is persisted server-side and nothing is enforced — the
+permission layer is a UI convenience, not a security boundary.

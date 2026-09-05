@@ -1,15 +1,16 @@
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# Repository-wide rules only.
+#
+# Build output and dependencies belong to whichever package produces them, so
+# they live in that package's own .gitignore:
+#
+#   frontend/.gitignore   Angular and Node artifacts
+#   backend/.gitignore    to be added when the backend starts
+#
+# Keeping them there means a package can be moved or removed without leaving
+# orphaned rules behind up here.
 
-# Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
-
-# Node
-/node_modules
-npm-debug.log
-yarn-error.log
+# Documentation suite (kept out of the app repo)
+/docs
 
 # IDEs and editors
 .idea/
@@ -19,26 +20,10 @@ yarn-error.log
 *.launch
 .settings/
 *.sublime-workspace
+.history/
 
-# Visual Studio Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.history/*
-
-# Documentation suite (kept out of the app repo)
-/docs
-
-# Miscellaneous
-/.angular/cache
-.sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
-testem.log
-/typings
+# Logs
+*.log
 
 # System files
 .DS_Store
