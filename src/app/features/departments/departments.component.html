@@ -1,0 +1,111 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <h1 class="nx-h1">Departments</h1>
+      <p class="nx-body mt-1 text-content-secondary">
+        {{ total() }} departments · {{ totalOpenRoles() }} open roles
+      </p>
+    </div>
+
+    <a
+      *hasPermission="'departments.create'"
+      routerLink="/departments/new"
+      class="nx-button-text inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <nx-icon name="plus" [size]="18" />
+      New department
+    </a>
+  </div>
+
+  <div class="mt-6 relative max-w-sm">
+    <label for="dep-search" class="sr-only">Search departments</label>
+    <span
+      class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-content-secondary"
+      aria-hidden="true"
+    >
+      <nx-icon name="search" [size]="18" />
+    </span>
+    <input
+      id="dep-search"
+      type="search"
+      [value]="search()"
+      (input)="onSearch($event)"
+      placeholder="Name or location…"
+      class="nx-body h-10 w-full rounded-lg border border-border-subtle bg-surface pl-10 pr-3 text-content placeholder:text-content-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+    />
+  </div>
+
+  @if (filtered().length > 0) {
+    <ul class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      @for (department of filtered(); track department.id) {
+        <li>
+          <a
+            [routerLink]="['/departments', department.id]"
+            class="block h-full rounded-lg border border-border-subtle bg-surface p-5 shadow-sm transition-colors hover:border-primary/40 hover:bg-background/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <h2 class="nx-h3 truncate">{{ department.name }}</h2>
+                <p class="nx-caption mt-1">{{ department.location }}</p>
+              </div>
+              <span class="nx-caption shrink-0 rounded-full bg-background px-2 py-0.5 font-medium">
+                {{ headcount(department) }} people
+              </span>
+            </div>
+
+            <p class="nx-body mt-3 line-clamp-2 text-content-secondary">
+              {{ department.description }}
+            </p>
+
+            <div class="mt-4">
+              <div class="flex items-baseline justify-between">
+                <span class="nx-caption">Capacity</span>
+                <span class="nx-caption tabular-nums">
+                  {{ headcount(department) }} / {{ department.capacityTarget }}
+                </span>
+              </div>
+              <div class="mt-1.5">
+                <nx-progress-bar
+                  [value]="capacityPct(department)"
+                  [tone]="capacityTone(department)"
+                  [showValue]="false"
+                  [label]="department.name + ' capacity'"
+                />
+              </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <span class="flex min-w-0 items-center gap-2">
+                <nx-avatar [initials]="leadInitials(department)" [size]="28" />
+                <span class="nx-caption truncate">{{ leadName(department) }}</span>
+              </span>
+              <span class="nx-caption shrink-0 tabular-nums">
+                {{ department.budget | currency: 'USD' : 'symbol' : '1.0-0' }}
+              </span>
+            </div>
+
+            @if (department.openRoles > 0) {
+              <p class="nx-caption mt-3 text-primary-text">
+                {{ department.openRoles }} open
+                {{ department.openRoles === 1 ? 'role' : 'roles' }}
+              </p>
+            }
+          </a>
+        </li>
+      }
+    </ul>
+  } @else {
+    <div
+      class="mt-4 flex flex-col items-center justify-center rounded-lg border border-border-subtle bg-surface px-6 py-16 text-center shadow-sm"
+    >
+      <span
+        class="flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+        aria-hidden="true"
+      >
+        <nx-icon name="building" [size]="24" />
+      </span>
+      <h2 class="nx-h3 mt-4">No departments match that search</h2>
+      <p class="nx-body mt-1 max-w-sm text-content-secondary">Try a different term.</p>
+    </div>
+  }
+</div>

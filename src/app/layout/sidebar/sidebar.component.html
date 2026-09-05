@@ -1,0 +1,105 @@
+<div
+  class="flex h-full flex-col border-r border-border-subtle bg-surface transition-[width] duration-200"
+  [style.width.px]="collapsed ? 72 : 264"
+>
+  <!-- Brand -->
+  <div class="flex h-16 shrink-0 items-center gap-3 px-4">
+    @if (logo(); as mark) {
+      <!-- Rendered as an <img>, never inlined: an uploaded SVG is untrusted
+           markup, and an image context cannot execute script inside it. -->
+      <img
+        [src]="mark"
+        [alt]="orgName() + ' logo'"
+        class="h-9 w-9 shrink-0 rounded-lg object-contain"
+      />
+    } @else {
+      <span
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-white"
+        aria-hidden="true"
+      >
+        <nx-icon name="logo" [size]="20" />
+      </span>
+    }
+    @if (!collapsed) {
+      <span class="nx-h3 truncate" [attr.title]="orgName()">{{ orgName() }}</span>
+    }
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 overflow-y-auto px-3 pb-4" aria-label="Main">
+    @for (group of groups(); track group.title) {
+      <div class="mt-5 first:mt-1">
+        @if (!collapsed) {
+          <p class="nx-table-header px-2 pb-1.5">{{ group.title }}</p>
+        } @else {
+          <div class="mx-2 mb-2 border-t border-border-subtle" role="presentation"></div>
+        }
+
+        <ul>
+          @for (item of group.items; track item.route) {
+            <li>
+              <a
+                [routerLink]="item.route"
+                routerLinkActive="is-active"
+                [attr.title]="collapsed ? item.label : null"
+                class="group relative mt-0.5 flex items-center gap-3 rounded-md px-2 py-2 text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                [class.justify-center]="collapsed"
+              >
+                <nx-icon [name]="item.icon" [size]="20" class="shrink-0" />
+
+                @if (!collapsed) {
+                  <span class="nx-body truncate">{{ item.label }}</span>
+
+                  @if (badgeFor(item); as badge) {
+                    <span
+                      class="nx-caption ml-auto rounded-full bg-background px-2 py-0.5 font-medium text-content-secondary"
+                    >
+                      {{ badge }}
+                    </span>
+                  }
+                }
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </nav>
+
+  <!-- User + collapse -->
+  <div class="shrink-0 border-t border-border-subtle p-3">
+    <div class="flex items-center gap-3 px-1 py-1.5">
+      <span
+        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-[12px] font-semibold text-white"
+        aria-hidden="true"
+      >
+        {{ currentUser.initials }}
+      </span>
+      @if (!collapsed) {
+        <span class="min-w-0">
+          <span class="nx-body block truncate font-medium">{{ currentUser.name }}</span>
+          <span class="nx-caption block truncate">{{ roleName() }}</span>
+        </span>
+      }
+    </div>
+
+    <button
+      type="button"
+      (click)="toggle.emit()"
+      class="mt-1 flex w-full items-center gap-3 rounded-md px-2 py-2 text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      [class.justify-center]="collapsed"
+      [attr.aria-expanded]="!collapsed"
+      aria-controls="nx-sidebar-nav"
+    >
+      <nx-icon
+        name="chevron-left"
+        [size]="20"
+        class="shrink-0 transition-transform"
+        [class.rotate-180]="collapsed"
+      />
+      @if (!collapsed) {
+        <span class="nx-body">Collapse</span>
+      }
+    </button>
+  </div>
+</div>

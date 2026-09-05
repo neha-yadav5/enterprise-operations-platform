@@ -1,0 +1,106 @@
+// Theme variants.
+//
+// A theme only swaps brand and neutral values. Status colours (success,
+// warning, danger) stay fixed across every theme on purpose: they carry
+// meaning, and "at risk" changing hue with the skin would make the meaning
+// theme-dependent. The dark theme is the one exception — it has to restate the
+// `-text` steps, because those are tuned for dark ink on a light surface and
+// invert on a dark one.
+//
+// `:root[data-theme=...]` outranks the bare `:root` block in _tokens.scss, so
+// these override cleanly without !important.
+
+// ---------------------------------------------------------------- Azure ----
+// The default, restated so switching back is a real assignment rather than a
+// fallback to whatever happens to be in _tokens.scss.
+:root[data-theme='azure'] {
+  --nx-color-primary: 37 99 235; // #2563EB
+  --nx-color-primary-text: 29 78 216; // #1D4ED8 — 6.70:1
+  --nx-color-secondary: 14 165 233; // #0EA5E9
+  --nx-color-secondary-text: 3 105 161; // #0369A1 — 5.93:1
+
+  --nx-color-background: 248 250 252; // #F8FAFC
+  --nx-color-surface: 255 255 255;
+  --nx-color-border: 229 231 235; // #E5E7EB
+  --nx-color-text: 17 24 39; // #111827
+  --nx-color-text-secondary: 107 114 128; // #6B7280
+}
+
+// --------------------------------------------------------------- Indigo ----
+// Warmer neutrals and a deeper primary. Reads less "default SaaS blue".
+:root[data-theme='indigo'] {
+  --nx-color-primary: 79 70 229; // #4F46E5 — 6.29:1 on white
+  --nx-color-primary-text: 67 56 202; // #4338CA — 7.89:1
+  --nx-color-secondary: 124 58 237; // #7C3AED
+  --nx-color-secondary-text: 91 33 182; // #5B21B6 — 9.35:1
+
+  --nx-color-background: 250 250 249; // #FAFAF9 warm
+  --nx-color-surface: 255 255 255;
+  --nx-color-border: 231 229 228; // #E7E5E4
+  --nx-color-text: 28 25 23; // #1C1917
+  --nx-color-text-secondary: 120 113 108; // #78716C — 4.87:1
+}
+
+// ----------------------------------------------------------------- Teal ----
+// Calmer and more clinical. Primary is a fill-only colour: #0D9488 is 3.74:1
+// on white, so text uses the darker step.
+:root[data-theme='teal'] {
+  --nx-color-primary: 13 148 136; // #0D9488 — fills only
+  --nx-color-primary-text: 15 118 110; // #0F766E — 5.50:1
+  --nx-color-secondary: 8 145 178; // #0891B2
+  --nx-color-secondary-text: 21 94 117; // #155E75 — 7.28:1
+
+  --nx-color-background: 248 250 250; // #F8FAFA
+  --nx-color-surface: 255 255 255;
+  --nx-color-border: 226 232 232; // #E2E8E8
+  --nx-color-text: 15 23 30; // #0F171E
+  --nx-color-text-secondary: 100 116 118; // #647476
+}
+
+// ------------------------------------------------------------- Graphite ----
+// Near-monochrome. Buttons read almost black, the way Linear and Vercel do.
+// Links sit at slate-800, so they are darker than body text rather than a
+// different hue — pair with underline-on-hover, which the components already do.
+:root[data-theme='graphite'] {
+  --nx-color-primary: 51 65 85; // #334155 — 10.3:1
+  --nx-color-primary-text: 30 41 59; // #1E293B — 13.4:1
+  --nx-color-secondary: 71 85 105; // #475569
+  --nx-color-secondary-text: 51 65 85; // #334155
+
+  --nx-color-background: 248 250 252;
+  --nx-color-surface: 255 255 255;
+  --nx-color-border: 226 232 240; // #E2E8F0
+  --nx-color-text: 15 23 42; // #0F172A
+  --nx-color-text-secondary: 100 116 139; // #64748B — 4.76:1
+}
+
+// ------------------------------------------------------------- Midnight ----
+// The dark option. Note the split: `--nx-color-primary` stays the mid blue so
+// white button labels still clear 4.5:1 on it, while `--nx-color-primary-text`
+// moves to a light blue for links and text sitting on the dark surface. Every
+// status `-text` step is restated for the same reason.
+:root[data-theme='midnight'] {
+  --nx-color-primary: 37 99 235; // #2563EB — white label = 5.17:1
+  --nx-color-primary-text: 96 165 250; // #60A5FA — 6.89:1 on surface
+  --nx-color-secondary: 2 132 199; // #0284C7
+  --nx-color-secondary-text: 56 189 248; // #38BDF8
+
+  --nx-color-success-text: 74 222 128; // #4ADE80
+  --nx-color-warning-text: 251 191 36; // #FBBF24
+  --nx-color-danger-text: 248 113 113; // #F87171
+
+  --nx-color-background: 11 17 32; // #0B1120
+  --nx-color-surface: 17 24 39; // #111827
+  --nx-color-border: 31 41 55; // #1F2937
+  --nx-color-text: 249 250 251; // #F9FAFB
+  --nx-color-text-secondary: 156 163 175; // #9CA3AF — 6.92:1
+
+  // Drop shadows barely register on a dark ground; depth comes from the
+  // border and surface step instead, so these are pulled back to near-nothing.
+  --nx-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --nx-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --nx-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.55), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+
+  // The browser needs telling, so form controls and scrollbars follow.
+  color-scheme: dark;
+}

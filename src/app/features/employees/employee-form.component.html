@@ -1,0 +1,278 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <a
+    routerLink="/employees"
+    class="nx-caption inline-flex items-center gap-1.5 rounded-md text-content-secondary transition-colors hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+  >
+    <nx-icon name="arrow-left" [size]="16" />
+    All employees
+  </a>
+
+  <h1 class="nx-h1 mt-3">{{ isEdit ? 'Edit employee' : 'Add employee' }}</h1>
+  <p class="nx-body mt-1 text-content-secondary">
+    {{
+      isEdit
+        ? 'The employee ID is the record key and cannot be changed.'
+        : 'Creates the employee record. A login account is issued separately once Roles & Permissions ships.'
+    }}
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="mt-6 max-w-3xl">
+    @if (submitted() && form.invalid) {
+      <div
+        role="alert"
+        class="mb-5 flex items-start gap-3 rounded-lg border border-danger/25 bg-danger/10 px-4 py-3"
+      >
+        <span class="mt-0.5 shrink-0 text-danger-text" aria-hidden="true">
+          <nx-icon name="close" [size]="18" />
+        </span>
+        <p class="nx-body text-danger-text">
+          Some fields need attention. Check the highlighted values below.
+        </p>
+      </div>
+    }
+
+    <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+      <h2 class="nx-h3">Personal</h2>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-2">
+        <div>
+          <label for="emp-firstName" class="nx-table-header block">First name *</label>
+          <input
+            id="emp-firstName"
+            formControlName="firstName"
+            type="text"
+            autocomplete="given-name"
+            [attr.aria-invalid]="invalid('firstName')"
+            [attr.aria-describedby]="invalid('firstName') ? 'err-firstName' : null"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('firstName')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('firstName')) {
+            <p id="err-firstName" class="nx-caption mt-1 text-danger-text">
+              {{ errorFor('firstName') }}
+            </p>
+          }
+        </div>
+
+        <div>
+          <label for="emp-lastName" class="nx-table-header block">Last name *</label>
+          <input
+            id="emp-lastName"
+            formControlName="lastName"
+            type="text"
+            autocomplete="family-name"
+            [attr.aria-invalid]="invalid('lastName')"
+            [attr.aria-describedby]="invalid('lastName') ? 'err-lastName' : null"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('lastName')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('lastName')) {
+            <p id="err-lastName" class="nx-caption mt-1 text-danger-text">
+              {{ errorFor('lastName') }}
+            </p>
+          }
+        </div>
+
+        <div>
+          <label for="emp-email" class="nx-table-header block">Work email *</label>
+          <input
+            id="emp-email"
+            formControlName="email"
+            type="email"
+            autocomplete="email"
+            [attr.aria-invalid]="invalid('email')"
+            [attr.aria-describedby]="invalid('email') ? 'err-email' : null"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('email')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('email')) {
+            <p id="err-email" class="nx-caption mt-1 text-danger-text">{{ errorFor('email') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="emp-id" class="nx-table-header block">Employee ID</label>
+          <input
+            id="emp-id"
+            formControlName="id"
+            type="text"
+            [placeholder]="placeholderId + ' (auto)'"
+            [attr.aria-invalid]="invalid('id')"
+            [attr.aria-describedby]="invalid('id') ? 'err-id' : 'hint-id'"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 font-mono text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('id')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('id')) {
+            <p id="err-id" class="nx-caption mt-1 text-danger-text">{{ errorFor('id') }}</p>
+          } @else {
+            <p id="hint-id" class="nx-caption mt-1">Leave blank to assign the next free ID.</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+      <h2 class="nx-h3">Role</h2>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-2">
+        <div class="sm:col-span-2">
+          <label for="emp-title" class="nx-table-header block">Job title *</label>
+          <input
+            id="emp-title"
+            formControlName="title"
+            type="text"
+            placeholder="Staff Engineer"
+            [attr.aria-invalid]="invalid('title')"
+            [attr.aria-describedby]="invalid('title') ? 'err-title' : null"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('title')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('title')) {
+            <p id="err-title" class="nx-caption mt-1 text-danger-text">{{ errorFor('title') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="emp-department" class="nx-table-header block">Department *</label>
+          <select
+            id="emp-department"
+            formControlName="department"
+            [attr.aria-invalid]="invalid('department')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('department')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          >
+            <option value="">Select a department</option>
+            @for (item of departments; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+          @if (invalid('department')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('department') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="emp-location" class="nx-table-header block">Location *</label>
+          <select
+            id="emp-location"
+            formControlName="location"
+            [attr.aria-invalid]="invalid('location')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('location')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          >
+            <option value="">Select a location</option>
+            @for (item of locations; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+          @if (invalid('location')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('location') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="emp-managerId" class="nx-table-header block">Manager</label>
+          <select
+            id="emp-managerId"
+            formControlName="managerId"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="">No manager</option>
+            @for (person of managers(); track person.id) {
+              <option [value]="person.id">{{ name(person) }} — {{ person.title }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label for="emp-employmentType" class="nx-table-header block">Employment type *</label>
+          <select
+            id="emp-employmentType"
+            formControlName="employmentType"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            @for (item of employmentTypes; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label for="emp-startDate" class="nx-table-header block">Start date *</label>
+          <input
+            id="emp-startDate"
+            formControlName="startDate"
+            type="date"
+            [attr.aria-invalid]="invalid('startDate')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('startDate')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('startDate')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('startDate') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="emp-status" class="nx-table-header block">Status *</label>
+          <select
+            id="emp-status"
+            formControlName="status"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            @for (item of statuses; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5 flex flex-wrap items-center justify-end gap-3">
+      <a
+        routerLink="/employees"
+        class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        Cancel
+      </a>
+      <button
+        type="submit"
+        class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="check" [size]="18" />
+        {{ isEdit ? 'Save changes' : 'Add employee' }}
+      </button>
+    </div>
+  </form>
+</div>

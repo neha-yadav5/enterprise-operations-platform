@@ -1,0 +1,18 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+// Angular Material 18's M3 themes don't emit `.mat-accent` / `.mat-warn`
+// variants, so the legacy `color="accent"` / `color="warn"` inputs are inert.
+// Overriding the component's own M3 tokens is the supported route. Both
+// containers use text-safe steps so the white label clears 4.5:1.
+.nx-button-secondary {
+  --mdc-filled-button-container-color: rgb(var(--nx-color-secondary-text));
+  --mdc-filled-button-label-text-color: rgb(var(--nx-color-surface));
+}
+
+.nx-button-danger {
+  --mdc-filled-button-container-color: rgb(var(--nx-color-danger));
+  --mdc-filled-button-label-text-color: rgb(var(--nx-color-surface));
+}

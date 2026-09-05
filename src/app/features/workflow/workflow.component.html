@@ -1,0 +1,148 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <h1 class="nx-h1">Workflow</h1>
+      <p class="nx-body mt-1 text-content-secondary">
+        {{ active() }} active of {{ total() }} definitions. Approval chains are applied by request
+        type.
+      </p>
+    </div>
+
+    <button
+      *hasPermission="'workflows.create'"
+      type="button"
+      (click)="startCreate()"
+      class="nx-button-text inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <nx-icon name="plus" [size]="18" />
+      New workflow
+    </button>
+  </div>
+
+  <!-- Inline create -->
+  @if (creating()) {
+    <div class="mt-5 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+      <h2 class="nx-h3">Create workflow</h2>
+      <p class="nx-caption mt-1">
+        Starts as a draft with a manager approval step. Steps are configured in the builder.
+      </p>
+
+      <div class="mt-4 flex flex-wrap items-end gap-4">
+        <div class="min-w-0 flex-1">
+          <label for="wf-name" class="nx-table-header block">Name</label>
+          <input
+            id="wf-name"
+            type="text"
+            [value]="newName()"
+            (input)="onNewName($event)"
+            placeholder="Travel approval"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content placeholder:text-content-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+
+        <div>
+          <label for="wf-type" class="nx-table-header block">Request type</label>
+          <select
+            id="wf-type"
+            [value]="newType()"
+            (change)="onNewType($event)"
+            class="nx-body mt-1.5 h-10 rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            @for (item of requestTypes; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            (click)="cancelCreate()"
+            class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="create()"
+            [disabled]="!newName().trim()"
+            class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Create and open
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <div class="mt-6 relative max-w-sm">
+    <label for="wf-search" class="sr-only">Search workflows</label>
+    <span
+      class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-content-secondary"
+      aria-hidden="true"
+    >
+      <nx-icon name="search" [size]="18" />
+    </span>
+    <input
+      id="wf-search"
+      type="search"
+      [value]="search()"
+      (input)="onSearch($event)"
+      placeholder="Name, code or request type…"
+      class="nx-body h-10 w-full rounded-lg border border-border-subtle bg-surface pl-10 pr-3 text-content placeholder:text-content-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+    />
+  </div>
+
+  <ul class="mt-4 grid gap-4 md:grid-cols-2">
+    @for (workflow of filtered(); track workflow.id) {
+      <li>
+        <a
+          [routerLink]="['/workflow', workflow.id]"
+          class="block h-full rounded-lg border border-border-subtle bg-surface p-5 shadow-sm transition-colors hover:border-primary/40 hover:bg-background/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h2 class="nx-h3 truncate">{{ workflow.name }}</h2>
+              <p class="nx-caption mt-1">
+                <span class="font-mono">{{ workflow.id }}</span> · {{ workflow.requestType }} · v{{
+                  workflow.version
+                }}
+              </p>
+            </div>
+            <nx-status-badge
+              [label]="workflow.status"
+              [tone]="toneFor(workflow.status)"
+              class="shrink-0"
+            />
+          </div>
+
+          <!-- Chain preview -->
+          <ol class="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-2">
+            @for (step of workflow.steps; track step.id; let last = $last) {
+              <li class="flex items-center gap-1.5">
+                <span class="nx-caption rounded-md bg-background px-2 py-1">{{ step.name }}</span>
+                @if (!last) {
+                  <span class="text-content-secondary" aria-hidden="true">
+                    <nx-icon name="chevron-right" [size]="14" />
+                  </span>
+                }
+              </li>
+            }
+          </ol>
+
+          <p class="nx-caption mt-4">
+            {{ workflow.steps.length }} {{ workflow.steps.length === 1 ? 'step' : 'steps' }} · updated
+            {{ workflow.updatedAt | date: 'd MMM y' }}
+          </p>
+        </a>
+      </li>
+    } @empty {
+      <li
+        class="rounded-lg border border-border-subtle bg-surface px-6 py-16 text-center shadow-sm md:col-span-2"
+      >
+        <h2 class="nx-h3">No workflows match that search</h2>
+        <p class="nx-body mt-1 text-content-secondary">Try a different term.</p>
+      </li>
+    }
+  </ul>
+</div>

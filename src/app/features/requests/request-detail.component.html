@@ -1,0 +1,260 @@
+@if (request(); as r) {
+  <div class="px-4 pb-10 pt-3 sm:px-6">
+    <a
+      routerLink="/requests"
+      class="nx-caption inline-flex items-center gap-1.5 rounded-md text-content-secondary transition-colors hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <nx-icon name="arrow-left" [size]="16" />
+      All requests
+    </a>
+
+    <!-- Header -->
+    <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h1 class="nx-h1">{{ r.title }}</h1>
+          <nx-status-badge [label]="r.state" [tone]="toneFor(r.state)" />
+        </div>
+        <p class="nx-caption mt-1">
+          <span class="font-mono">{{ r.id }}</span> · {{ r.type }} · submitted
+          {{ r.submittedAt | date: 'd MMM y, HH:mm' }}
+        </p>
+      </div>
+
+      @if (requester(); as who) {
+        <a
+          [routerLink]="['/employees', who.id]"
+          class="flex shrink-0 items-center gap-3 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <nx-avatar [initials]="initialsOf(who)" [size]="40" />
+          <span class="min-w-0">
+            <span class="nx-body block truncate font-medium">{{ name(who) }}</span>
+            <span class="nx-caption block truncate">{{ who.department }}</span>
+          </span>
+        </a>
+      }
+    </div>
+
+    <div class="mt-6 grid gap-4 lg:grid-cols-3">
+      <!-- Left: details + discussion -->
+      <div class="space-y-4 lg:col-span-2">
+        <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+          <h2 class="nx-h3">Request details</h2>
+
+          <dl class="mt-4 grid gap-x-6 gap-y-4 sm:grid-cols-2">
+            @for (field of r.details; track field.label) {
+              <div>
+                <dt class="nx-table-header">{{ field.label }}</dt>
+                <dd class="nx-body mt-1">{{ field.value }}</dd>
+              </div>
+            }
+
+            @if (r.amount) {
+              <div>
+                <dt class="nx-table-header">Amount</dt>
+                <dd class="nx-body mt-1 font-medium tabular-nums">
+                  {{ r.amount | currency: 'USD' : 'symbol' : '1.0-0' }}
+                </dd>
+              </div>
+            }
+          </dl>
+        </section>
+
+        <!-- Discussion: human conversation, distinct from the audit trail -->
+        <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+          <h2 class="nx-h3">Discussion</h2>
+          <p class="nx-caption mt-1">
+            Conversation attached to this request. System events appear in the approval timeline.
+          </p>
+
+          @if (r.comments.length > 0) {
+            <ul class="mt-4 space-y-4">
+              @for (comment of r.comments; track $index) {
+                <li class="flex gap-3">
+                  <nx-avatar [initials]="authorInitials(comment.authorId)" [size]="32" />
+                  <div class="min-w-0 flex-1">
+                    <p class="flex flex-wrap items-baseline gap-x-2">
+                      <span class="nx-body font-medium">{{ authorName(comment.authorId) }}</span>
+                      <span class="nx-caption">{{ comment.at | date: 'd MMM, HH:mm' }}</span>
+                    </p>
+                    <p class="nx-body mt-1 text-content-secondary">{{ comment.body }}</p>
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="nx-body mt-4 text-content-secondary">
+              No messages yet. Start the conversation below.
+            </p>
+          }
+
+          <div class="mt-5 border-t border-border-subtle pt-4">
+            <label for="req-comment" class="sr-only">Write a message</label>
+            <textarea
+              id="req-comment"
+              rows="3"
+              [value]="draft()"
+              (input)="onDraft($event)"
+              placeholder="Write a message…"
+              class="nx-body w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-content placeholder:text-content-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            ></textarea>
+            <div class="mt-2 flex justify-end">
+              <button
+                type="button"
+                (click)="postComment()"
+                [disabled]="!draft().trim()"
+                class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right: approval chain + decision -->
+      <div class="space-y-4">
+        <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+          <h2 class="nx-h3">Approval timeline</h2>
+
+          <ol class="mt-4">
+            @for (step of r.steps; track step.name; let last = $last) {
+              <li class="flex gap-3">
+                <div class="flex flex-col items-center">
+                  <span
+                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2"
+                    [class]="stepClasses(step.state)"
+                    aria-hidden="true"
+                  >
+                    @if (step.state === 'Complete') {
+                      <nx-icon name="check" [size]="14" [strokeWidth]="2.5" />
+                    } @else if (step.state === 'Rejected') {
+                      <nx-icon name="close" [size]="14" [strokeWidth]="2.5" />
+                    } @else if (step.state === 'Current') {
+                      <span class="h-2 w-2 rounded-full bg-warning"></span>
+                    }
+                  </span>
+
+                  @if (!last) {
+                    <span class="my-1 w-0.5 flex-1 bg-border-subtle" aria-hidden="true"></span>
+                  }
+                </div>
+
+                <div class="min-w-0 pb-5" [class.pb-0]="last">
+                  <p class="nx-body font-medium">{{ step.name }}</p>
+
+                  @if (step.approverId) {
+                    <p class="nx-caption mt-0.5">{{ approverName(step.approverId) }}</p>
+                  }
+
+                  <p class="nx-caption mt-0.5">
+                    @if (step.decidedAt) {
+                      {{ step.decidedAt | date: 'd MMM, HH:mm' }}
+                    } @else if (step.state === 'Current') {
+                      Pending
+                    } @else {
+                      Waiting
+                    }
+                  </p>
+
+                  @if (step.note) {
+                    <p class="nx-caption mt-1.5 rounded-md bg-background px-2.5 py-1.5">
+                      {{ step.note }}
+                    </p>
+                  }
+                </div>
+              </li>
+            }
+          </ol>
+        </section>
+
+        @if (canDecide()) {
+          <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+            <h2 class="nx-h3">Your decision</h2>
+            <p class="nx-caption mt-1">You are the approver for “{{ currentStepName() }}”.</p>
+
+            <label for="req-note" class="nx-table-header mt-4 block">Note (optional)</label>
+            <textarea
+              id="req-note"
+              rows="3"
+              [value]="note()"
+              (input)="onNote($event)"
+              placeholder="Add context for the requester…"
+              class="nx-body mt-1.5 w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-content placeholder:text-content-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            ></textarea>
+            <p class="nx-caption mt-1">A note is attached to the step and posted to the discussion.</p>
+
+            <div class="mt-4 space-y-2">
+              @if (canApprove()) {
+              <button
+                type="button"
+                (click)="approve()"
+                class="nx-button-text inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-success-text px-4 text-white transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                <nx-icon name="check" [size]="18" />
+                Approve
+              </button>
+              <button
+                type="button"
+                (click)="requestChanges()"
+                class="nx-button-text inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                <nx-icon name="edit" [size]="18" />
+                Request changes
+              </button>
+              }
+              @if (canReject()) {
+              <button
+                type="button"
+                (click)="reject()"
+                class="nx-button-text inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-danger/30 bg-surface px-4 text-danger-text transition-colors hover:bg-danger/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                <nx-icon name="close" [size]="18" />
+                Reject
+              </button>
+              }
+            </div>
+          </section>
+        } @else {
+          <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+            <h2 class="nx-h3">Decision</h2>
+            @if (decisionBlocked()) {
+              <p class="nx-body mt-2 text-content-secondary">
+                This request is waiting on “{{ currentStepName() }}”, but your role cannot approve
+                or reject it.
+              </p>
+            } @else {
+              <p class="nx-body mt-2 text-content-secondary">
+                This request is {{ r.state | lowercase }} — no decision is outstanding.
+              </p>
+            }
+          </section>
+        }
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="px-4 pb-10 pt-3 sm:px-6">
+    <div
+      class="flex flex-col items-center justify-center rounded-lg border border-border-subtle bg-surface px-6 py-20 text-center"
+    >
+      <span
+        class="flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+        aria-hidden="true"
+      >
+        <nx-icon name="inbox" [size]="24" />
+      </span>
+      <h1 class="nx-h2 mt-4">Request not found</h1>
+      <p class="nx-body mt-1 max-w-sm text-content-secondary">
+        No request matches that identifier. It may have been withdrawn, or the link may be wrong.
+      </p>
+      <a
+        routerLink="/requests"
+        class="nx-button-text mt-5 inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="arrow-left" [size]="18" />
+        Back to requests
+      </a>
+    </div>
+  </div>
+}

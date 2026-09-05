@@ -1,0 +1,112 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <h1 class="nx-h1">Notifications</h1>
+      <p class="nx-body mt-1 text-content-secondary">
+        {{ unreadCount() }} unread.
+      </p>
+    </div>
+
+    <div class="flex shrink-0 items-center gap-2">
+      <button
+        type="button"
+        (click)="toggleFilter()"
+        [attr.aria-pressed]="showUnreadOnly()"
+        class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg border px-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        [class]="
+          showUnreadOnly()
+            ? 'border-primary bg-primary/10 text-primary-text'
+            : 'border-border-subtle bg-surface text-content hover:bg-background'
+        "
+      >
+        <nx-icon name="filter" [size]="18" />
+        Unread only
+      </button>
+
+      @if (unreadCount() > 0) {
+        <button
+          type="button"
+          (click)="markAllRead()"
+          class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <nx-icon name="check" [size]="18" />
+          Mark all as read
+        </button>
+      }
+    </div>
+  </div>
+
+  <ul class="mt-6 overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-sm">
+    @for (item of visible(); track item.id) {
+      <li class="border-b border-border-subtle last:border-b-0">
+        <div class="flex gap-3 px-5 py-4 transition-colors hover:bg-background">
+          <span
+            class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+            [class]="item.read ? 'bg-background text-content-secondary' : 'bg-primary/10 text-primary-text'"
+            aria-hidden="true"
+          >
+            <nx-icon [name]="iconFor(item)" [size]="18" />
+          </span>
+
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-baseline gap-x-2">
+              <p class="nx-body font-medium" [class.text-content-secondary]="item.read">
+                {{ item.title }}
+              </p>
+              @if (!item.read) {
+                <span
+                  class="nx-caption rounded-full bg-primary/10 px-1.5 py-0.5 font-medium text-primary-text"
+                >
+                  New
+                </span>
+              }
+            </div>
+            <p class="nx-body mt-1 text-content-secondary">{{ item.body }}</p>
+            <p class="nx-caption mt-1">{{ item.at | date: 'd MMM y, HH:mm' }}</p>
+          </div>
+
+          <div class="flex shrink-0 items-start gap-2">
+            @if (item.link) {
+              <a
+                [routerLink]="item.link"
+                (click)="markRead(item)"
+                class="nx-button-text inline-flex h-9 items-center rounded-md border border-border-subtle bg-surface px-3 transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                Open
+              </a>
+            }
+            @if (!item.read) {
+              <button
+                type="button"
+                (click)="markRead(item)"
+                class="flex h-9 w-9 items-center justify-center rounded-md text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                [attr.aria-label]="'Mark ' + item.title + ' as read'"
+              >
+                <nx-icon name="check" [size]="18" />
+              </button>
+            }
+          </div>
+        </div>
+      </li>
+    } @empty {
+      <li class="px-6 py-16 text-center">
+        <span
+          class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+          aria-hidden="true"
+        >
+          <nx-icon name="bell" [size]="24" />
+        </span>
+        <h2 class="nx-h3 mt-4">
+          {{ showUnreadOnly() ? 'Nothing unread' : 'No notifications' }}
+        </h2>
+        <p class="nx-body mt-1 text-content-secondary">
+          {{
+            showUnreadOnly()
+              ? 'You are all caught up.'
+              : 'Approvals, mentions and system events will appear here.'
+          }}
+        </p>
+      </li>
+    }
+  </ul>
+</div>

@@ -1,0 +1,266 @@
+@if (document(); as d) {
+  <div class="px-4 pb-10 pt-3 sm:px-6">
+    <a
+      routerLink="/documents"
+      class="nx-caption inline-flex items-center gap-1.5 rounded-md text-content-secondary transition-colors hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <nx-icon name="arrow-left" [size]="16" />
+      All documents
+    </a>
+
+    <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h1 class="nx-h1">{{ d.name }}</h1>
+          <nx-status-badge [label]="d.status" [tone]="toneFor(d.status)" />
+        </div>
+        <p class="nx-caption mt-1">
+          <span class="font-mono">{{ d.id }}</span> · {{ d.folder }} · {{ d.format }} ·
+          {{ sizeLabel() }}
+          @if (currentVersion(); as v) {
+            · {{ v.version }}
+          }
+        </p>
+
+        @if (d.tags.length > 0) {
+          <ul class="mt-2 flex flex-wrap gap-1.5">
+            @for (tag of d.tags; track tag) {
+              <li class="nx-caption rounded-full bg-background px-2 py-0.5">{{ tag }}</li>
+            }
+          </ul>
+        }
+      </div>
+
+      <div class="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          disabled
+          title="There is no file store yet — only the document record exists"
+          class="nx-button-text inline-flex h-10 cursor-not-allowed items-center gap-2 rounded-lg border border-border-subtle bg-surface px-3 text-content-secondary opacity-60"
+        >
+          <nx-icon name="download" [size]="18" />
+          Download
+        </button>
+        <button
+          *hasPermission="'documents.edit'"
+          type="button"
+          (click)="startVersion()"
+          [attr.aria-expanded]="addingVersion()"
+          class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <nx-icon name="edit" [size]="18" />
+          New version
+        </button>
+      </div>
+    </div>
+
+    <!-- New version -->
+    @if (addingVersion()) {
+      <div class="mt-4 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+        <h2 class="nx-h3">Publish a new version</h2>
+        <p class="nx-caption mt-1">
+          Adds a version entry with you as the author. The file itself is not stored — there is no
+          file store yet.
+        </p>
+
+        <label for="dv-note" class="nx-table-header mt-4 block">What changed?</label>
+        <textarea
+          id="dv-note"
+          rows="2"
+          [value]="versionNote()"
+          (input)="onVersionNote($event)"
+          placeholder="Updated the leave policy section"
+          class="nx-body mt-1.5 w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-content placeholder:text-content-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        ></textarea>
+
+        <div class="mt-3 flex justify-end gap-3">
+          <button
+            type="button"
+            (click)="cancelVersion()"
+            class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="confirmVersion()"
+            [disabled]="!versionNote().trim()"
+            class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <nx-icon name="check" [size]="18" />
+            Publish
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Tabs -->
+    <div class="mt-6 border-b border-border-subtle">
+      <div role="tablist" aria-label="Document sections" class="-mb-px flex gap-1 overflow-x-auto">
+        @for (tab of tabs; track tab.id) {
+          <button
+            type="button"
+            role="tab"
+            [id]="'dctab-' + tab.id"
+            [attr.aria-selected]="activeTab() === tab.id"
+            [attr.aria-controls]="'dcpanel-' + tab.id"
+            [attr.tabindex]="activeTab() === tab.id ? 0 : -1"
+            (click)="activeTab.set(tab.id)"
+            class="nx-button-text shrink-0 border-b-2 px-3 py-2.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            [class]="
+              activeTab() === tab.id
+                ? 'border-primary text-primary-text'
+                : 'border-transparent text-content-secondary hover:border-border-subtle hover:text-content'
+            "
+          >
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (activeTab() === 'preview') {
+      <div
+        role="tabpanel"
+        id="dcpanel-preview"
+        aria-labelledby="dctab-preview"
+        class="mt-6 flex flex-col items-center justify-center rounded-lg border border-dashed border-border-subtle bg-surface px-6 py-20 text-center"
+      >
+        <span
+          class="flex h-14 w-14 items-center justify-center rounded-xl bg-background text-content-secondary"
+          aria-hidden="true"
+        >
+          <nx-icon name="document" [size]="28" />
+        </span>
+        <h2 class="nx-h3 mt-4">Preview not available</h2>
+        <p class="nx-body mx-auto mt-1 max-w-md text-content-secondary">
+          Rendering {{ d.format }} files in the browser needs the file store, which arrives with the
+          backend. The metadata, versions and access rules on the other tabs are real.
+        </p>
+      </div>
+    }
+
+    @if (activeTab() === 'versions') {
+      <div role="tabpanel" id="dcpanel-versions" aria-labelledby="dctab-versions" class="mt-6">
+        <ol class="overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-sm">
+          @for (version of d.versions; track version.version; let first = $first) {
+            <li class="border-b border-border-subtle px-5 py-4 last:border-b-0">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="flex flex-wrap items-center gap-x-2">
+                    <span class="nx-body font-medium">{{ version.version }}</span>
+                    @if (first) {
+                      <span
+                        class="nx-caption rounded-full bg-success/10 px-2 py-0.5 font-medium text-success-text"
+                      >
+                        Current
+                      </span>
+                    }
+                  </p>
+                  <p class="nx-body mt-1 text-content-secondary">{{ version.note }}</p>
+                  <p class="nx-caption mt-1">
+                    {{ authorName(version.authorId) }} · {{ version.at | date: 'd MMM y, HH:mm' }}
+                  </p>
+                </div>
+
+                @if (!first) {
+                  <button
+                    *hasPermission="'documents.edit'"
+                    type="button"
+                    (click)="restore(version.version)"
+                    [attr.aria-label]="'Restore ' + version.version + ' as a new version'"
+                    class="nx-button-text inline-flex h-9 shrink-0 items-center rounded-md border border-border-subtle bg-surface px-3 transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  >
+                    Restore
+                  </button>
+                }
+              </div>
+            </li>
+          }
+        </ol>
+      </div>
+    }
+
+    @if (activeTab() === 'access') {
+      <div
+        role="tabpanel"
+        id="dcpanel-access"
+        aria-labelledby="dctab-access"
+        class="mt-6 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm"
+      >
+        <h2 class="nx-h3">Access</h2>
+
+        <dl class="mt-4 grid gap-x-6 gap-y-4 sm:grid-cols-2">
+          <div>
+            <dt class="nx-table-header">Visibility</dt>
+            <dd class="nx-body mt-1">{{ d.access }}</dd>
+          </div>
+          <div>
+            <dt class="nx-table-header">Owner</dt>
+            <dd class="mt-1">
+              @if (owner(); as who) {
+                <a
+                  [routerLink]="['/employees', who.id]"
+                  class="flex items-center gap-2.5 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  <nx-avatar [initials]="initialsOf(who)" [size]="28" />
+                  <span class="nx-body truncate">{{ name(who) }}</span>
+                </a>
+              }
+            </dd>
+          </div>
+        </dl>
+
+        <p class="nx-caption mt-5">
+          Per-person and per-role sharing arrives with Roles &amp; Permissions. Today access is set
+          at the document level only.
+        </p>
+      </div>
+    }
+
+    @if (activeTab() === 'activity') {
+      <div
+        role="tabpanel"
+        id="dcpanel-activity"
+        aria-labelledby="dctab-activity"
+        class="mt-6 rounded-lg border border-dashed border-border-subtle bg-surface px-6 py-16 text-center"
+      >
+        <span
+          class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+          aria-hidden="true"
+        >
+          <nx-icon name="audit" [size]="24" />
+        </span>
+        <h2 class="nx-h3 mt-4">No activity recorded</h2>
+        <p class="nx-body mx-auto mt-1 max-w-md text-content-secondary">
+          Views, downloads and permission changes are recorded once the backend audits them. Version
+          history is on its own tab.
+        </p>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="px-4 pb-10 pt-3 sm:px-6">
+    <div
+      class="flex flex-col items-center justify-center rounded-lg border border-border-subtle bg-surface px-6 py-20 text-center"
+    >
+      <span
+        class="flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+        aria-hidden="true"
+      >
+        <nx-icon name="document" [size]="24" />
+      </span>
+      <h1 class="nx-h2 mt-4">Document not found</h1>
+      <p class="nx-body mt-1 max-w-sm text-content-secondary">
+        No document matches that identifier.
+      </p>
+      <a
+        routerLink="/documents"
+        class="nx-button-text mt-5 inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="arrow-left" [size]="18" />
+        Back to documents
+      </a>
+    </div>
+  </div>
+}

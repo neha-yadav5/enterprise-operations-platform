@@ -1,0 +1,367 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <div class="min-w-0">
+    <h1 class="nx-h1">Analytics</h1>
+    <p class="nx-body mt-1 max-w-2xl text-content-secondary">
+      Trends, comparisons and rankings across the platform. Every figure links back to the records
+      it came from.
+    </p>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="mt-6 rounded-lg border border-border-subtle bg-surface p-4 shadow-sm">
+    <div class="flex flex-wrap items-center gap-3">
+      <!-- Period -->
+      <div class="flex rounded-lg border border-border-subtle p-0.5" role="group" aria-label="Period">
+        @for (item of periods; track item) {
+          <button
+            type="button"
+            (click)="onPeriod(item)"
+            [attr.aria-pressed]="period() === item"
+            class="nx-button-text rounded-md px-3 py-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            [class]="
+              period() === item
+                ? 'bg-primary/10 text-primary-text'
+                : 'text-content-secondary hover:text-content'
+            "
+          >
+            {{ periodLabels[item] }}
+          </button>
+        }
+      </div>
+
+      <!-- Compare -->
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          role="switch"
+          [attr.aria-checked]="compare()"
+          (click)="toggleCompare()"
+          class="flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          [class]="compare() ? 'bg-primary' : 'bg-border-subtle'"
+        >
+          <span
+            class="h-5 w-5 rounded-full bg-surface shadow-sm transition-transform"
+            [class]="compare() ? 'translate-x-5' : 'translate-x-0'"
+          ></span>
+        </button>
+        <span class="nx-body">Compare to previous period</span>
+      </div>
+
+      <!-- Department -->
+      <div>
+        <label for="an-department" class="sr-only">Filter by department</label>
+        <select
+          id="an-department"
+          [value]="department()"
+          (change)="onDepartment($event)"
+          class="nx-body h-10 rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        >
+          @for (item of departments(); track item) {
+            <option [value]="item">
+              {{ item === 'All' ? 'All departments' : item }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+        @if (isFiltered()) {
+          <button
+            type="button"
+            (click)="reset()"
+            class="nx-button-text inline-flex h-10 items-center gap-1.5 rounded-lg px-2 text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <nx-icon name="close" [size]="16" />
+            Reset
+          </button>
+        }
+
+        <button
+          type="button"
+          (click)="startSave()"
+          class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg border border-border-subtle bg-surface px-3 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <nx-icon name="plus" [size]="18" />
+          Save view
+        </button>
+
+        <button
+          type="button"
+          (click)="exportCsv()"
+          aria-label="Export the current KPI set as CSV"
+          class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg border border-border-subtle bg-surface px-3 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <nx-icon name="download" [size]="18" class="text-content-secondary" />
+          Export
+        </button>
+      </div>
+    </div>
+
+    <!-- Save view row -->
+    @if (savingView()) {
+      <div class="mt-3 flex flex-wrap items-end gap-3 border-t border-border-subtle pt-3">
+        <div class="min-w-0 flex-1 sm:max-w-xs">
+          <label for="an-view-name" class="nx-table-header block">View name</label>
+          <input
+            id="an-view-name"
+            type="text"
+            [value]="newViewName()"
+            (input)="onViewName($event)"
+            placeholder="Exec monthly"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content placeholder:text-content-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <button
+          type="button"
+          (click)="cancelSave()"
+          class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="saveView()"
+          [disabled]="!newViewName().trim()"
+          class="nx-button-text inline-flex h-10 items-center rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Save
+        </button>
+      </div>
+    }
+
+    <!-- Saved views -->
+    @if (savedViews().length > 0) {
+      <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-border-subtle pt-3">
+        <span class="nx-table-header">Saved views</span>
+        @for (view of savedViews(); track view.id) {
+          <span
+            class="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-background py-0.5 pl-3 pr-1"
+          >
+            <button
+              type="button"
+              (click)="apply(view)"
+              class="nx-caption font-medium text-content transition-colors hover:text-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              {{ view.name }}
+            </button>
+            <button
+              type="button"
+              (click)="remove(view)"
+              class="flex h-5 w-5 items-center justify-center rounded-full text-content-secondary transition-colors hover:bg-surface hover:text-danger-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              [attr.aria-label]="'Delete view ' + view.name"
+            >
+              <nx-icon name="close" [size]="12" />
+            </button>
+          </span>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- KPI grid -->
+  <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    @for (kpi of kpis(); track kpi.key) {
+      <article class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+        <div class="flex items-start justify-between gap-2">
+          <p class="nx-table-header" [attr.title]="kpi.explanation">{{ kpi.label }}</p>
+          @if (kpi.drill) {
+            <a
+              [routerLink]="kpi.drill.link"
+              [queryParams]="kpi.drill.params"
+              class="nx-caption inline-flex items-center gap-0.5 rounded-md text-primary-text transition-colors hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              Records
+              <nx-icon name="chevron-right" [size]="14" />
+            </a>
+          }
+        </div>
+
+        <div class="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <span class="nx-h1 tabular-nums">{{ kpi.value | number }}{{ kpi.unit }}</span>
+
+          @if (compare()) {
+            <span class="nx-caption font-medium" [class]="toneClass(kpi)">
+              <span aria-hidden="true">{{ arrow(kpi) }}</span>
+              {{ deltaPct(kpi) > 0 ? '+' : '' }}{{ deltaPct(kpi) }}%
+            </span>
+          }
+        </div>
+
+        @if (compare()) {
+          <p class="nx-caption mt-1">
+            Previous {{ periodLabels[period()] | lowercase }}: {{ kpi.previous | number
+            }}{{ kpi.unit }}
+          </p>
+        } @else {
+          <p class="nx-caption mt-1">{{ kpi.explanation }}</p>
+        }
+      </article>
+    }
+  </div>
+
+  <!-- Workforce -->
+  <section class="mt-8">
+    <div class="flex flex-wrap items-baseline justify-between gap-3">
+      <h2 class="nx-h2">Workforce</h2>
+      <a
+        routerLink="/employees"
+        class="nx-caption inline-flex items-center gap-0.5 text-primary-text hover:underline"
+      >
+        Open Employees
+        <nx-icon name="chevron-right" [size]="14" />
+      </a>
+    </div>
+
+    <div class="mt-4 grid gap-4 lg:grid-cols-3">
+      <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm lg:col-span-2">
+        <h3 class="nx-h3">New starters per month</h3>
+        <p class="nx-caption mt-1">Derived from each employee's start date.</p>
+        <div class="mt-5">
+          <nx-area-chart
+            [data]="hiringVelocity()"
+            caption="New starters per month"
+            [max]="hiringMax()"
+            [ticks]="hiringTicks()"
+          />
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+        <h3 class="nx-h3">Employee status</h3>
+        <p class="nx-caption mt-1">Distribution across the current scope.</p>
+        <div class="mt-5">
+          <nx-donut-chart
+            [data]="employeeStatus()"
+            caption="Employee status distribution"
+            centreLabel="people"
+          />
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm lg:col-span-3">
+        <h3 class="nx-h3">Headcount by department</h3>
+        <p class="nx-caption mt-1">Active employees per department, largest first.</p>
+        <div class="mt-5">
+          <nx-bar-chart [data]="headcountByDepartment()" caption="Headcount by department" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Projects -->
+  <section class="mt-8">
+    <div class="flex flex-wrap items-baseline justify-between gap-3">
+      <h2 class="nx-h2">Projects</h2>
+      <a
+        routerLink="/projects"
+        class="nx-caption inline-flex items-center gap-0.5 text-primary-text hover:underline"
+      >
+        Open Projects
+        <nx-icon name="chevron-right" [size]="14" />
+      </a>
+    </div>
+
+    <div class="mt-4 grid gap-4 lg:grid-cols-2">
+      <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+        <h3 class="nx-h3">Projects by status</h3>
+        <p class="nx-caption mt-1">Delivery health across the current scope.</p>
+        <div class="mt-5">
+          <nx-donut-chart
+            [data]="projectStatus()"
+            caption="Projects by status"
+            centreLabel="projects"
+          />
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+        <h3 class="nx-h3">Budget committed</h3>
+        <p class="nx-caption mt-1">Spend to date in thousands of USD, highest first.</p>
+        <div class="mt-5">
+          <nx-bar-chart
+            [data]="budgetByProject()"
+            caption="Budget committed by project"
+            valueSuffix="k"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Requests -->
+  <section class="mt-8">
+    <div class="flex flex-wrap items-baseline justify-between gap-3">
+      <h2 class="nx-h2">Requests &amp; workflows</h2>
+      <a
+        routerLink="/requests"
+        class="nx-caption inline-flex items-center gap-0.5 text-primary-text hover:underline"
+      >
+        Open Requests
+        <nx-icon name="chevron-right" [size]="14" />
+      </a>
+    </div>
+
+    <div class="mt-4 grid gap-4 lg:grid-cols-2">
+      <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+        <h3 class="nx-h3">Requests by type</h3>
+        <p class="nx-caption mt-1">Volume raised, all time.</p>
+        <div class="mt-5">
+          <nx-bar-chart [data]="requestsByType()" caption="Requests by type" />
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+        <h3 class="nx-h3">Requests by state</h3>
+        <p class="nx-caption mt-1">Where every request currently sits.</p>
+        <div class="mt-5">
+          <nx-donut-chart
+            [data]="requestsByState()"
+            caption="Requests by state"
+            centreLabel="requests"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Assets -->
+  <section class="mt-8">
+    <div class="flex flex-wrap items-baseline justify-between gap-3">
+      <h2 class="nx-h2">Assets</h2>
+      <a
+        routerLink="/assets"
+        class="nx-caption inline-flex items-center gap-0.5 text-primary-text hover:underline"
+      >
+        Open Assets
+        <nx-icon name="chevron-right" [size]="14" />
+      </a>
+    </div>
+
+    <div class="mt-4 grid gap-4 lg:grid-cols-2">
+      <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+        <h3 class="nx-h3">Assets by category</h3>
+        <p class="nx-caption mt-1">Inventory counts, retired units excluded.</p>
+        <div class="mt-5">
+          <nx-bar-chart [data]="assetsByCategory()" caption="Assets by category" />
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+        <h3 class="nx-h3">Availability</h3>
+        <p class="nx-caption mt-1">Assigned against everything else in inventory.</p>
+        <div class="mt-5">
+          <nx-donut-chart
+            [data]="assetAvailability()"
+            caption="Asset availability"
+            centreLabel="assets"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="nx-caption mt-8">
+    Current figures are computed live from the operational records. Previous-period figures are
+    synthetic — the fixture stores hold no history to compare against.
+  </p>
+</div>

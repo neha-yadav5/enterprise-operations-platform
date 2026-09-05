@@ -1,0 +1,366 @@
+<header
+  class="relative flex h-16 items-center gap-4 border-b border-border-subtle bg-surface px-4 sm:px-6"
+>
+  <!-- Global search -->
+  <div class="relative min-w-0 flex-1 sm:max-w-xl">
+    <label for="nx-global-search" class="sr-only">Search employees, projects, requests</label>
+    <span
+      class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-content-secondary"
+      aria-hidden="true"
+    >
+      <nx-icon name="search" [size]="18" />
+    </span>
+    <input
+      id="nx-global-search"
+      type="search"
+      placeholder="Search employees, projects, requests…"
+      class="nx-body h-10 w-full rounded-lg border border-border-subtle bg-background pl-10 pr-16 text-content placeholder:text-content-secondary focus:border-primary focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+    />
+    <kbd
+      class="nx-caption pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-border-subtle bg-surface px-1.5 py-0.5 font-mono sm:block"
+    >
+      ⌘K
+    </kbd>
+  </div>
+
+  <div class="ml-auto flex items-center gap-2 sm:gap-3">
+    <!-- Quick action -->
+    @if (quickActions().length > 0) {
+    <div class="relative">
+      <button
+        type="button"
+        (click)="toggle('quickAction')"
+        [attr.aria-expanded]="quickActionOpen()"
+        aria-haspopup="menu"
+        class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:px-4"
+      >
+        <nx-icon name="plus" [size]="18" />
+        <span class="hidden sm:inline">Quick action</span>
+      </button>
+
+      @if (quickActionOpen()) {
+        <div
+          role="menu"
+          class="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-lg"
+        >
+          <ul class="p-1.5">
+            @for (action of quickActions(); track action.link) {
+              <li>
+                <a
+                  role="menuitem"
+                  [routerLink]="action.link"
+                  (click)="close()"
+                  class="flex items-center gap-3 rounded-md px-3 py-2 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                >
+                  <span class="text-content-secondary" aria-hidden="true">
+                    <nx-icon [name]="action.icon" [size]="18" />
+                  </span>
+                  <span class="nx-body">{{ action.label }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+    }
+
+    <!-- Theme picker -->
+    <div class="relative">
+      <button
+        type="button"
+        (click)="toggle('theme')"
+        [attr.aria-expanded]="themeOpen()"
+        aria-haspopup="menu"
+        aria-label="Change theme"
+        class="flex h-10 w-10 items-center justify-center rounded-lg text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="palette" [size]="20" />
+      </button>
+
+      @if (themeOpen()) {
+        <div
+          role="menu"
+          class="absolute right-0 z-50 mt-2 w-72 overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-lg"
+        >
+          <div class="border-b border-border-subtle px-4 py-3">
+            <h2 class="nx-h3">Theme</h2>
+            <p class="nx-caption mt-0.5">Applies everywhere and is remembered.</p>
+          </div>
+
+          <ul class="p-1.5">
+            @for (theme of themes; track theme.id) {
+              <li>
+                <button
+                  role="menuitemradio"
+                  type="button"
+                  [attr.aria-checked]="activeTheme() === theme.id"
+                  (click)="setTheme(theme.id)"
+                  class="flex w-full items-start gap-3 rounded-md px-3 py-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                  [class]="
+                    activeTheme() === theme.id
+                      ? 'bg-primary/10'
+                      : 'hover:bg-background'
+                  "
+                >
+                  <!-- Swatches, plus a tick: never colour alone -->
+                  <span class="mt-0.5 flex shrink-0 gap-1" aria-hidden="true">
+                    @for (swatch of theme.swatches; track swatch) {
+                      <span
+                        class="h-4 w-4 rounded-full border border-border-subtle"
+                        [style.background]="swatch"
+                      ></span>
+                    }
+                  </span>
+
+                  <span class="min-w-0 flex-1">
+                    <span class="nx-body block font-medium">
+                      {{ theme.name }}
+                      @if (theme.dark) {
+                        <span class="nx-caption font-normal text-content-secondary"> · dark</span>
+                      }
+                    </span>
+                    <span class="nx-caption block">{{ theme.description }}</span>
+                  </span>
+
+                  @if (activeTheme() === theme.id) {
+                    <span class="mt-0.5 shrink-0 text-primary-text" aria-hidden="true">
+                      <nx-icon name="check" [size]="16" [strokeWidth]="2.5" />
+                    </span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+
+          <div class="border-t border-border-subtle p-2">
+            <a
+              routerLink="/style-guide"
+              (click)="close()"
+              class="nx-caption block rounded-md px-3 py-2 text-center text-primary-text transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              Compare on the design system page
+            </a>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Notifications -->
+    <div class="relative">
+      <button
+        type="button"
+        (click)="toggle('notifications')"
+        [attr.aria-expanded]="notificationsOpen()"
+        class="relative flex h-10 w-10 items-center justify-center rounded-lg text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        [attr.aria-label]="unreadCount() + ' unread notifications'"
+      >
+        <nx-icon name="bell" [size]="20" />
+        @if (unreadCount() > 0) {
+          <span
+            class="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold leading-none text-white"
+            aria-hidden="true"
+          >
+            {{ unreadCount() }}
+          </span>
+        }
+      </button>
+
+      @if (notificationsOpen()) {
+        <div
+          class="absolute right-0 z-50 mt-2 w-[22rem] overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-lg"
+        >
+          <div class="flex items-center justify-between border-b border-border-subtle px-4 py-3">
+            <h2 class="nx-h3">Notifications</h2>
+            @if (unreadCount() > 0) {
+              <button
+                type="button"
+                (click)="markAllRead()"
+                class="nx-caption rounded-md px-1.5 py-0.5 font-medium text-primary-text transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              >
+                Mark all as read
+              </button>
+            }
+          </div>
+
+          <ul class="max-h-96 overflow-y-auto">
+            @for (item of recent(); track item.id) {
+              <li class="border-b border-border-subtle last:border-b-0">
+                <a
+                  [routerLink]="item.link ?? []"
+                  (click)="openNotification(item)"
+                  class="flex gap-3 px-4 py-3 transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+                >
+                  <span
+                    class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                    [class]="item.read ? 'bg-background text-content-secondary' : 'bg-primary/10 text-primary-text'"
+                    aria-hidden="true"
+                  >
+                    <nx-icon [name]="iconFor(item)" [size]="16" />
+                  </span>
+
+                  <span class="min-w-0 flex-1">
+                    <span class="nx-body block font-medium" [class.text-content-secondary]="item.read">
+                      {{ item.title }}
+                    </span>
+                    <span class="nx-caption mt-0.5 block truncate">{{ item.body }}</span>
+                    <span class="nx-caption mt-0.5 block">{{ item.at | date: 'd MMM, HH:mm' }}</span>
+                  </span>
+
+                  @if (!item.read) {
+                    <span
+                      class="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary"
+                      aria-label="Unread"
+                    ></span>
+                  }
+                </a>
+              </li>
+            } @empty {
+              <li class="px-4 py-10 text-center">
+                <p class="nx-body text-content-secondary">Nothing new.</p>
+              </li>
+            }
+          </ul>
+
+          <div class="border-t border-border-subtle p-2">
+            <a
+              routerLink="/notifications"
+              (click)="close()"
+              class="nx-button-text block rounded-md px-3 py-2 text-center text-primary-text transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              View all notifications
+            </a>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Account -->
+    <div class="relative">
+      <button
+        type="button"
+        (click)="toggle('account')"
+        [attr.aria-expanded]="accountOpen()"
+        aria-haspopup="menu"
+        [attr.aria-label]="'Account menu for ' + displayName()"
+        class="flex h-10 items-center gap-2 rounded-lg pl-1 pr-1.5 transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:pr-2"
+      >
+        <span
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-[12px] font-semibold text-white"
+          aria-hidden="true"
+        >
+          {{ initials() }}
+        </span>
+        <span class="nx-body hidden max-w-[10rem] truncate font-medium lg:block">
+          {{ displayName() }}
+        </span>
+        <span class="text-content-secondary" aria-hidden="true">
+          <nx-icon name="chevron-down" [size]="16" />
+        </span>
+      </button>
+
+      @if (accountOpen()) {
+        <div
+          role="menu"
+          class="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-lg"
+        >
+          <div class="border-b border-border-subtle px-4 py-3">
+            <p class="nx-body truncate font-medium">{{ displayName() }}</p>
+            <p class="nx-caption truncate">{{ roleLabel() }}</p>
+          </div>
+
+          <!-- Demo role switcher. Not a security boundary — it only changes
+               what this browser shows. -->
+          <div class="border-b border-border-subtle px-2 py-2">
+            <p class="nx-table-header px-2 pb-1.5">
+              Switch role
+              <span class="font-normal normal-case text-content-secondary"> · demo only</span>
+            </p>
+
+            <ul role="group" class="max-h-64 overflow-y-auto">
+              @for (role of roles; track role.id) {
+                <li>
+                  <button
+                    type="button"
+                    role="menuitemradio"
+                    [attr.aria-checked]="currentRoleId() === role.id"
+                    (click)="switchRole(role.id)"
+                    class="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                    [class]="
+                      currentRoleId() === role.id ? 'bg-primary/10' : 'hover:bg-background'
+                    "
+                  >
+                    <span class="mt-0.5 w-4 shrink-0 text-primary-text" aria-hidden="true">
+                      @if (currentRoleId() === role.id) {
+                        <nx-icon name="check" [size]="16" [strokeWidth]="2.5" />
+                      }
+                    </span>
+                    <span class="min-w-0 flex-1">
+                      <span class="nx-body block truncate">{{ role.name }}</span>
+                      <span class="nx-caption block truncate">
+                        {{ role.scope }} · {{ role.permissions.length }} permissions
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <ul class="p-1.5">
+            <li>
+              <a
+                role="menuitem"
+                routerLink="/profile"
+                (click)="close()"
+                class="flex items-center gap-3 rounded-md px-3 py-2 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              >
+                <span class="text-content-secondary" aria-hidden="true">
+                  <nx-icon name="users" [size]="18" />
+                </span>
+                <span class="nx-body">My profile</span>
+              </a>
+            </li>
+            <li>
+              <a
+                role="menuitem"
+                routerLink="/settings"
+                (click)="close()"
+                class="flex items-center gap-3 rounded-md px-3 py-2 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              >
+                <span class="text-content-secondary" aria-hidden="true">
+                  <nx-icon name="sliders" [size]="18" />
+                </span>
+                <span class="nx-body">Account settings</span>
+              </a>
+            </li>
+          </ul>
+
+          <div class="border-t border-border-subtle p-1.5">
+            <button
+              role="menuitem"
+              type="button"
+              disabled
+              title="Authentication is not wired up yet, so there is no session to end"
+              class="flex w-full cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 text-content-secondary opacity-60"
+            >
+              <nx-icon name="log-out" [size]="18" />
+              <span class="nx-body">Sign out</span>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Click-away layer. Sits under the panels but over the page. -->
+  @if (openPanel()) {
+    <button
+      type="button"
+      class="fixed inset-0 z-40 cursor-default"
+      (click)="close()"
+      tabindex="-1"
+      aria-hidden="true"
+    ></button>
+  }
+</header>

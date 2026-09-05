@@ -1,0 +1,183 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <a
+    routerLink="/documents"
+    class="nx-caption inline-flex items-center gap-1.5 rounded-md text-content-secondary transition-colors hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+  >
+    <nx-icon name="arrow-left" [size]="16" />
+    All documents
+  </a>
+
+  <h1 class="nx-h1 mt-3">Upload document</h1>
+  <p class="nx-body mt-1 text-content-secondary">
+    Creates the document record and its first version entry.
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="mt-6 max-w-3xl">
+    @if (submitted() && form.invalid) {
+      <div
+        role="alert"
+        class="mb-5 flex items-start gap-3 rounded-lg border border-danger/25 bg-danger/10 px-4 py-3"
+      >
+        <span class="mt-0.5 shrink-0 text-danger-text" aria-hidden="true">
+          <nx-icon name="close" [size]="18" />
+        </span>
+        <p class="nx-body text-danger-text">
+          Some fields need attention. Check the highlighted values below.
+        </p>
+      </div>
+    }
+
+    <!-- File picker -->
+    <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+      <h2 class="nx-h3">File</h2>
+
+      <label
+        for="doc-file"
+        class="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border-subtle bg-background/50 px-6 py-10 text-center transition-colors hover:border-primary/50 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary"
+      >
+        <span
+          class="flex h-12 w-12 items-center justify-center rounded-xl bg-surface text-content-secondary"
+          aria-hidden="true"
+        >
+          <nx-icon name="download" [size]="24" />
+        </span>
+
+        @if (pickedFile(); as filename) {
+          <span class="nx-body mt-3 font-medium">{{ filename }}</span>
+          <span class="nx-caption mt-1">Choose a different file</span>
+        } @else {
+          <span class="nx-body mt-3 font-medium">Drop a file here, or browse</span>
+          <span class="nx-caption mt-1">PDF, Word, spreadsheet or Markdown</span>
+        }
+
+        <input id="doc-file" type="file" class="sr-only" (change)="onFilePicked($event)" />
+      </label>
+
+      <p class="nx-caption mt-3">
+        The file itself is not stored yet — there is no file store until the backend lands. The
+        record, its metadata and its version history are created for real.
+      </p>
+    </div>
+
+    <div class="mt-4 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+      <h2 class="nx-h3">Details</h2>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-2">
+        <div class="sm:col-span-2">
+          <label for="doc-name" class="nx-table-header block">Document name *</label>
+          <input
+            id="doc-name"
+            formControlName="name"
+            type="text"
+            placeholder="Employee Handbook 2026"
+            [attr.aria-invalid]="invalid('name')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="invalid('name') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+          />
+          @if (invalid('name')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('name') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="doc-folder" class="nx-table-header block">Folder *</label>
+          <select
+            id="doc-folder"
+            formControlName="folder"
+            [attr.aria-invalid]="invalid('folder')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="invalid('folder') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+          >
+            <option value="">Select a folder</option>
+            @for (item of folders; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+          @if (invalid('folder')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('folder') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="doc-format" class="nx-table-header block">Format *</label>
+          <select
+            id="doc-format"
+            formControlName="format"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            @for (item of formats; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label for="doc-ownerId" class="nx-table-header block">Owner *</label>
+          <select
+            id="doc-ownerId"
+            formControlName="ownerId"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            @for (person of people(); track person.id) {
+              <option [value]="person.id">{{ name(person) }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label for="doc-access" class="nx-table-header block">Access *</label>
+          <select
+            id="doc-access"
+            formControlName="access"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            @for (item of accessLevels; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label for="doc-status" class="nx-table-header block">Status *</label>
+          <select
+            id="doc-status"
+            formControlName="status"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            @for (item of statuses; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label for="doc-tags" class="nx-table-header block">Tags</label>
+          <input
+            id="doc-tags"
+            formControlName="tags"
+            type="text"
+            placeholder="policy, handbook"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content placeholder:text-content-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <p class="nx-caption mt-1">Comma separated.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5 flex flex-wrap items-center justify-end gap-3">
+      <a
+        routerLink="/documents"
+        class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        Cancel
+      </a>
+      <button
+        type="submit"
+        class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="check" [size]="18" />
+        Upload
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,219 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <a
+    routerLink="/departments"
+    class="nx-caption inline-flex items-center gap-1.5 rounded-md text-content-secondary transition-colors hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+  >
+    <nx-icon name="arrow-left" [size]="16" />
+    All departments
+  </a>
+
+  <h1 class="nx-h1 mt-3">{{ isEdit ? 'Edit department' : 'New department' }}</h1>
+  <p class="nx-body mt-1 text-content-secondary">
+    Headcount is derived from the employee roster, so only the planned figures are set here.
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="mt-6 max-w-3xl">
+    @if (submitted() && form.invalid) {
+      <div
+        role="alert"
+        class="mb-5 flex items-start gap-3 rounded-lg border border-danger/25 bg-danger/10 px-4 py-3"
+      >
+        <span class="mt-0.5 shrink-0 text-danger-text" aria-hidden="true">
+          <nx-icon name="close" [size]="18" />
+        </span>
+        <p class="nx-body text-danger-text">
+          Some fields need attention. Check the highlighted values below.
+        </p>
+      </div>
+    }
+
+    <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+      <h2 class="nx-h3">Department</h2>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-2">
+        <div class="sm:col-span-2">
+          <label for="dep-name" class="nx-table-header block">Name *</label>
+          <input
+            id="dep-name"
+            formControlName="name"
+            type="text"
+            placeholder="Customer Success"
+            [attr.aria-invalid]="invalid('name')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('name')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('name')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('name') }}</p>
+          }
+        </div>
+
+        <div class="sm:col-span-2">
+          <label for="dep-description" class="nx-table-header block">Description *</label>
+          <textarea
+            id="dep-description"
+            formControlName="description"
+            rows="3"
+            placeholder="What this department is responsible for."
+            [attr.aria-invalid]="invalid('description')"
+            class="nx-body mt-1.5 w-full rounded-lg border bg-surface px-3 py-2 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('description')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          ></textarea>
+          @if (invalid('description')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('description') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="dep-leadId" class="nx-table-header block">Department lead *</label>
+          <select
+            id="dep-leadId"
+            formControlName="leadId"
+            [attr.aria-invalid]="invalid('leadId')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('leadId')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          >
+            <option value="">Select a lead</option>
+            @for (person of people(); track person.id) {
+              <option [value]="person.id">{{ name(person) }} — {{ person.title }}</option>
+            }
+          </select>
+          @if (invalid('leadId')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('leadId') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="dep-location" class="nx-table-header block">Location *</label>
+          <select
+            id="dep-location"
+            formControlName="location"
+            [attr.aria-invalid]="invalid('location')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('location')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          >
+            <option value="">Select a location</option>
+            @for (item of locations; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+          @if (invalid('location')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('location') }}</p>
+          }
+        </div>
+
+        <div class="sm:col-span-2">
+          <label for="dep-parentId" class="nx-table-header block">Parent department</label>
+          <select
+            id="dep-parentId"
+            formControlName="parentId"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="">Top level</option>
+            @for (parent of parents(); track parent.id) {
+              <option [value]="parent.id">{{ parent.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+      <h2 class="nx-h3">Planning</h2>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-3">
+        <div>
+          <label for="dep-budget" class="nx-table-header block">Annual budget (USD) *</label>
+          <input
+            id="dep-budget"
+            formControlName="budget"
+            type="number"
+            min="0"
+            step="10000"
+            [attr.aria-invalid]="invalid('budget')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 tabular-nums text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('budget')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('budget')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('budget') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="dep-capacityTarget" class="nx-table-header block">Headcount target *</label>
+          <input
+            id="dep-capacityTarget"
+            formControlName="capacityTarget"
+            type="number"
+            min="1"
+            [attr.aria-invalid]="invalid('capacityTarget')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 tabular-nums text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('capacityTarget')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('capacityTarget')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('capacityTarget') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="dep-openRoles" class="nx-table-header block">Open roles *</label>
+          <input
+            id="dep-openRoles"
+            formControlName="openRoles"
+            type="number"
+            min="0"
+            [attr.aria-invalid]="invalid('openRoles')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 tabular-nums text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('openRoles')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('openRoles')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('openRoles') }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5 flex flex-wrap items-center justify-end gap-3">
+      <a
+        routerLink="/departments"
+        class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        Cancel
+      </a>
+      <button
+        type="submit"
+        class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="check" [size]="18" />
+        {{ isEdit ? 'Save changes' : 'Create department' }}
+      </button>
+    </div>
+  </form>
+</div>

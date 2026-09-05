@@ -1,0 +1,131 @@
+<figure class="relative m-0">
+  <svg
+    [attr.viewBox]="viewBox"
+    class="h-auto w-full overflow-visible"
+    role="img"
+    [attr.aria-label]="caption"
+  >
+    <defs>
+      <linearGradient id="nx-area-fill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="rgb(var(--nx-color-primary))" stop-opacity="0.18" />
+        <stop offset="100%" stop-color="rgb(var(--nx-color-primary))" stop-opacity="0.01" />
+      </linearGradient>
+    </defs>
+
+    <!-- Recessive gridlines + y labels -->
+    @for (tick of ticks; track tick) {
+      <g>
+        <line
+          [attr.x1]="plotLeft"
+          [attr.x2]="plotRight"
+          [attr.y1]="yFor(tick)"
+          [attr.y2]="yFor(tick)"
+          stroke="rgb(var(--nx-color-border))"
+          stroke-width="1"
+          stroke-dasharray="3 4"
+        />
+        <text
+          [attr.x]="plotLeft - 10"
+          [attr.y]="yFor(tick) + 4"
+          text-anchor="end"
+          class="fill-content-secondary text-[11px]"
+        >
+          {{ tick }}
+        </text>
+      </g>
+    }
+
+    <!-- Area + line -->
+    <path [attr.d]="areaPath()" fill="url(#nx-area-fill)" />
+    <path
+      [attr.d]="linePath()"
+      fill="none"
+      stroke="rgb(var(--nx-color-primary))"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+
+    <!-- X labels -->
+    @for (c of coords(); track c.label) {
+      <text
+        [attr.x]="c.x"
+        [attr.y]="plotBottom + 18"
+        text-anchor="middle"
+        class="fill-content-secondary text-[11px]"
+      >
+        {{ c.label }}
+      </text>
+    }
+
+    <!-- Crosshair + marker for the hovered point -->
+    @if (active(); as a) {
+      <line
+        [attr.x1]="a.x"
+        [attr.x2]="a.x"
+        [attr.y1]="12"
+        [attr.y2]="plotBottom"
+        stroke="rgb(var(--nx-color-primary))"
+        stroke-width="1"
+        stroke-dasharray="3 3"
+        opacity="0.5"
+      />
+      <circle
+        [attr.cx]="a.x"
+        [attr.cy]="a.y"
+        r="5"
+        fill="rgb(var(--nx-color-primary))"
+        stroke="rgb(var(--nx-color-surface))"
+        stroke-width="2"
+      />
+    }
+
+    <!-- Hit targets: one band per point, wider than the mark -->
+    @for (c of coords(); track c.index) {
+      <rect
+        [attr.x]="bandX(c.index)"
+        [attr.y]="0"
+        [attr.width]="bandWidth()"
+        [attr.height]="plotBottom"
+        fill="transparent"
+        (mouseenter)="activeIndex.set(c.index)"
+        (mouseleave)="activeIndex.set(null)"
+      />
+    }
+  </svg>
+
+  <!-- Tooltip -->
+  @if (active(); as a) {
+    <div
+      class="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-md border border-border-subtle bg-surface px-3 py-2 shadow-md"
+      [style.left.%]="a.leftPct"
+      [style.top.px]="0"
+    >
+      <p class="nx-caption">{{ a.label }}</p>
+      <p class="nx-h3">{{ a.value | number }}</p>
+    </div>
+  }
+
+  <!-- Table view: the dataviz accessibility fallback. -->
+  <figcaption class="sr-only">
+    <table>
+      <caption>
+        {{ caption }}
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Period</th>
+          <th scope="col">Headcount</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of coords(); track c.label) {
+          <tr>
+            <th scope="row">{{ c.label }}</th>
+            <td>{{ c.value }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </figcaption>
+</figure>

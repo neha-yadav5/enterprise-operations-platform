@@ -1,0 +1,27 @@
+// NexusOne global stylesheet.
+//
+// Load order matters: Sass modules are emitted first (tokens, then the type
+// scale), followed by Tailwind's layers, and finally the Angular Material
+// theme. Utilities therefore come after our semantic classes and win on ties.
+
+@use '@angular/material' as mat;
+@use 'styles/m3-theme' as nexus-theme;
+@use 'styles/tokens';
+// Must follow tokens: these override the same custom properties.
+@use 'styles/themes';
+@use 'styles/typography';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@include mat.core();
+
+html {
+  @include mat.all-component-themes(nexus-theme.$light-theme);
+}
+
+// Colours only — the light theme above already emitted density and typography.
+html[data-theme='midnight'] {
+  @include mat.all-component-colors(nexus-theme.$dark-theme);
+}

@@ -1,0 +1,72 @@
+<figure class="m-0 flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-center">
+  <div class="relative shrink-0">
+    <svg viewBox="0 0 200 200" width="176" height="176" role="img" [attr.aria-label]="caption">
+      <g transform="rotate(-90 100 100)">
+        @for (arc of arcs(); track arc.label) {
+          <circle
+            cx="100"
+            cy="100"
+            [attr.r]="radius"
+            fill="none"
+            [attr.stroke]="arc.color"
+            [attr.stroke-width]="isActive(arc.index) ? 30 : 26"
+            [attr.stroke-dasharray]="arc.dash + ' ' + arc.rest"
+            [attr.stroke-dashoffset]="arc.offset"
+            class="transition-[stroke-width] duration-150"
+            (mouseenter)="activeIndex.set(arc.index)"
+            (mouseleave)="activeIndex.set(null)"
+          />
+        }
+      </g>
+    </svg>
+
+    <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+      <span class="nx-h1">{{ total() }}</span>
+      @if (centreLabel) {
+        <span class="nx-caption">{{ centreLabel }}</span>
+      }
+    </div>
+  </div>
+
+  <!-- Legend: label + count on every slice, so identity is never colour-alone -->
+  <ul class="w-full min-w-0 sm:w-44">
+    @for (arc of arcs(); track arc.label) {
+      <li
+        class="flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors"
+        [class.bg-background]="isActive(arc.index)"
+        (mouseenter)="activeIndex.set(arc.index)"
+        (mouseleave)="activeIndex.set(null)"
+      >
+        <span
+          class="h-2.5 w-2.5 shrink-0 rounded-full"
+          [style.background]="arc.color"
+          aria-hidden="true"
+        ></span>
+        <span class="nx-body truncate text-content">{{ arc.label }}</span>
+        <span class="nx-body ml-auto font-medium tabular-nums">{{ arc.value }}</span>
+      </li>
+    }
+  </ul>
+
+  <figcaption class="sr-only">
+    <table>
+      <caption>
+        {{ caption }}
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Status</th>
+          <th scope="col">Projects</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (arc of arcs(); track arc.label) {
+          <tr>
+            <th scope="row">{{ arc.label }}</th>
+            <td>{{ arc.value }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </figcaption>
+</figure>

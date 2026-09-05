@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>NexusOne</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    // Applies the stored theme before first paint. Without this the page
+    // renders in the default palette and visibly repaints once Angular
+    // hydrates and ThemeService runs. Kept inline and tiny on purpose — it is
+    // render-blocking by design.
+    (function () {
+      try {
+        var t = localStorage.getItem('nexusone.theme');
+        var known = ['azure', 'indigo', 'teal', 'graphite', 'midnight'];
+        document.documentElement.setAttribute(
+          'data-theme',
+          known.indexOf(t) > -1 ? t : 'indigo'
+        );
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'indigo');
+      }
+    })();
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>

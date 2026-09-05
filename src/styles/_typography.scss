@@ -1,0 +1,63 @@
+// NexusOne type scale — spec 6 (Typography).
+//
+// The spec names the styles (Display, H1, H2, H3, Body, Caption, Button,
+// Table Header) but not their metrics, so the values below are a data-dense
+// enterprise scale built on a 14px body, matching the reference dashboard.
+// Adjust here and every consumer follows.
+
+@layer components {
+  .nx-display {
+    font-size: 30px;
+    line-height: 36px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .nx-h1 {
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .nx-h2 {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 600;
+  }
+
+  .nx-h3 {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 600;
+  }
+
+  .nx-body {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 400;
+  }
+
+  .nx-caption {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 400;
+    color: rgb(var(--nx-color-text-secondary));
+  }
+
+  .nx-button-text {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+  }
+
+  // Used for table column headers and the small all-caps labels above KPI values.
+  .nx-table-header {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgb(var(--nx-color-text-secondary));
+  }
+}

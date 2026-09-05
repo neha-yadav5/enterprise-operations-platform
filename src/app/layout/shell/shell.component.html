@@ -1,0 +1,32 @@
+<div class="flex h-full overflow-hidden bg-background">
+  <nx-sidebar
+    class="hidden shrink-0 md:block"
+    [collapsed]="collapsed()"
+    (toggle)="toggleSidebar()"
+  />
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    <nx-topbar class="shrink-0" />
+
+    <main class="min-h-0 flex-1 overflow-y-auto">
+      <nav aria-label="Breadcrumb" class="px-4 pt-5 sm:px-6">
+        <ol class="flex flex-wrap items-center gap-x-2">
+          @for (crumb of crumbs(); track crumb; let last = $last) {
+            <li class="flex items-center gap-x-2">
+              @if (last) {
+                <span class="nx-caption font-medium text-content" aria-current="page">
+                  {{ crumb }}
+                </span>
+              } @else {
+                <span class="nx-caption">{{ crumb }}</span>
+                <span class="nx-caption" aria-hidden="true">/</span>
+              }
+            </li>
+          }
+        </ol>
+      </nav>
+
+      <router-outlet />
+    </main>
+  </div>
+</div>

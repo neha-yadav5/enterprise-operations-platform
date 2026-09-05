@@ -1,0 +1,181 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <!-- Header -->
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <h1 class="nx-h1">Requests</h1>
+      <p class="nx-body mt-1 text-content-secondary">
+        {{ pending() }} awaiting a decision out of {{ total() }} total.
+      </p>
+    </div>
+
+    <div class="flex shrink-0 items-center gap-2">
+      <button
+        type="button"
+        (click)="exportCsv()"
+        [attr.aria-label]="'Export ' + filtered().length + ' requests as CSV'"
+        class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg border border-border-subtle bg-surface px-3 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="download" [size]="18" class="text-content-secondary" />
+        Export
+      </button>
+
+      <a
+        *hasPermission="'requests.create'"
+        routerLink="/requests/new"
+        class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="plus" [size]="18" />
+        Raise request
+      </a>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="mt-6 flex flex-wrap items-center gap-3">
+    <div class="relative min-w-0 flex-1 sm:max-w-sm">
+      <label for="req-search" class="sr-only">Search requests</label>
+      <span
+        class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-content-secondary"
+        aria-hidden="true"
+      >
+        <nx-icon name="search" [size]="18" />
+      </span>
+      <input
+        id="req-search"
+        type="search"
+        [value]="search()"
+        (input)="onSearch($event)"
+        placeholder="ID, title or requester…"
+        class="nx-body h-10 w-full rounded-lg border border-border-subtle bg-surface pl-10 pr-3 text-content placeholder:text-content-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+      />
+    </div>
+
+    <div>
+      <label for="req-type" class="sr-only">Filter by type</label>
+      <select
+        id="req-type"
+        [value]="type()"
+        (change)="onType($event)"
+        class="nx-body h-10 rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+      >
+        <option value="All">All types</option>
+        @for (item of types; track item) {
+          <option [value]="item">{{ item }}</option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <label for="req-state" class="sr-only">Filter by state</label>
+      <select
+        id="req-state"
+        [value]="state()"
+        (change)="onState($event)"
+        class="nx-body h-10 rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+      >
+        <option value="All">All states</option>
+        @for (item of states; track item) {
+          <option [value]="item">{{ item }}</option>
+        }
+      </select>
+    </div>
+
+    @if (hasFilters()) {
+      <button
+        type="button"
+        (click)="clearFilters()"
+        class="nx-button-text inline-flex h-10 items-center gap-1.5 rounded-lg px-2 text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="close" [size]="16" />
+        Clear
+      </button>
+    }
+
+    <p class="nx-caption ml-auto" aria-live="polite">{{ filtered().length }} of {{ total() }}</p>
+  </div>
+
+  <!-- Table -->
+  <div class="mt-4 overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-sm">
+    @if (filtered().length > 0) {
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[900px] border-collapse text-left">
+          <caption class="sr-only">
+            Requests, filtered
+          </caption>
+          <thead>
+            <tr class="border-b border-border-subtle bg-background">
+              <th scope="col" class="nx-table-header px-5 py-3">Request</th>
+              <th scope="col" class="nx-table-header px-5 py-3">Requester</th>
+              <th scope="col" class="nx-table-header px-5 py-3">Type</th>
+              <th scope="col" class="nx-table-header px-5 py-3">Amount</th>
+              <th scope="col" class="nx-table-header px-5 py-3">Waiting on</th>
+              <th scope="col" class="nx-table-header px-5 py-3">Submitted</th>
+              <th scope="col" class="nx-table-header px-5 py-3">State</th>
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-border-subtle">
+            @for (request of filtered(); track request.id) {
+              <tr class="transition-colors hover:bg-background">
+                <th scope="row" class="px-5 py-3 font-normal">
+                  <a
+                    [routerLink]="['/requests', request.id]"
+                    class="block rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  >
+                    <span class="nx-body block truncate font-medium text-content">
+                      {{ request.title }}
+                    </span>
+                    <span class="nx-caption block font-mono">{{ request.id }}</span>
+                  </a>
+                </th>
+                <td class="px-5 py-3">
+                  <span class="flex items-center gap-2.5">
+                    <nx-avatar [initials]="requesterInitials(request)" [size]="28" />
+                    <span class="nx-body truncate">{{ requesterName(request) }}</span>
+                  </span>
+                </td>
+                <td class="nx-body px-5 py-3 text-content-secondary">{{ request.type }}</td>
+                <td class="nx-body px-5 py-3 tabular-nums">
+                  @if (request.amount) {
+                    {{ request.amount | currency: 'USD' : 'symbol' : '1.0-0' }}
+                  } @else {
+                    <span class="text-content-secondary">—</span>
+                  }
+                </td>
+                <td class="nx-body px-5 py-3 text-content-secondary">
+                  {{ currentStep(request) }}
+                </td>
+                <td class="nx-body px-5 py-3 text-content-secondary">
+                  {{ request.submittedAt | date: 'd MMM y' }}
+                </td>
+                <td class="px-5 py-3">
+                  <nx-status-badge [label]="request.state" [tone]="toneFor(request.state)" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="flex flex-col items-center justify-center px-6 py-16 text-center">
+        <span
+          class="flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+          aria-hidden="true"
+        >
+          <nx-icon name="inbox" [size]="24" />
+        </span>
+        <h2 class="nx-h3 mt-4">No requests match those filters</h2>
+        <p class="nx-body mt-1 max-w-sm text-content-secondary">
+          Try a different search term, or widen the type and state filters.
+        </p>
+        <button
+          type="button"
+          (click)="clearFilters()"
+          class="nx-button-text mt-4 inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-3 transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          Clear filters
+        </button>
+      </div>
+    }
+  </div>
+</div>

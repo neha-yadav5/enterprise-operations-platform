@@ -1,0 +1,49 @@
+<figure class="m-0">
+  <ul class="space-y-3">
+    @for (bar of bars(); track bar.label) {
+      <li
+        class="grid grid-cols-[minmax(6rem,10rem)_1fr_auto] items-center gap-3 rounded-md px-1 py-1 transition-colors"
+        [class.bg-background]="activeIndex() === bar.index"
+        (mouseenter)="activeIndex.set(bar.index)"
+        (mouseleave)="activeIndex.set(null)"
+      >
+        <span class="nx-body truncate text-content-secondary">{{ bar.label }}</span>
+
+        <span class="h-4 w-full overflow-hidden rounded-sm bg-background">
+          <span
+            class="block h-full rounded-sm bg-primary transition-[width] duration-300"
+            [style.width.%]="bar.pct"
+          ></span>
+        </span>
+
+        <span class="nx-body w-14 text-right font-medium tabular-nums">
+          {{ bar.value }}{{ valueSuffix }}
+        </span>
+      </li>
+    } @empty {
+      <li class="nx-body py-6 text-center text-content-secondary">No data for this selection.</li>
+    }
+  </ul>
+
+  <figcaption class="sr-only">
+    <table>
+      <caption>
+        {{ caption }}
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Category</th>
+          <th scope="col">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (bar of bars(); track bar.label) {
+          <tr>
+            <th scope="row">{{ bar.label }}</th>
+            <td>{{ bar.value }}{{ valueSuffix }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </figcaption>
+</figure>

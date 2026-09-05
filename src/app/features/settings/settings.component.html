@@ -1,0 +1,465 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <h1 class="nx-h1">Settings</h1>
+  <p class="nx-body mt-1 text-content-secondary">
+    Organisation profile, role permissions and security policy.
+  </p>
+
+  <!-- Tabs -->
+  <div class="mt-6 border-b border-border-subtle">
+    <div role="tablist" aria-label="Settings sections" class="-mb-px flex gap-1 overflow-x-auto">
+      @for (tab of tabs; track tab.id) {
+        <button
+          type="button"
+          role="tab"
+          [id]="'stab-' + tab.id"
+          [attr.aria-selected]="activeTab() === tab.id"
+          [attr.aria-controls]="'spanel-' + tab.id"
+          [attr.tabindex]="activeTab() === tab.id ? 0 : -1"
+          (click)="activeTab.set(tab.id)"
+          class="nx-button-text shrink-0 border-b-2 px-3 py-2.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          [class]="
+            activeTab() === tab.id
+              ? 'border-primary text-primary-text'
+              : 'border-transparent text-content-secondary hover:border-border-subtle hover:text-content'
+          "
+        >
+          {{ tab.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Organisation -->
+  @if (activeTab() === 'organisation') {
+    <div role="tabpanel" id="spanel-organisation" aria-labelledby="stab-organisation" class="mt-6">
+      @if (saved() && !orgDirty()) {
+        <div
+          role="status"
+          class="mb-4 flex items-center gap-3 rounded-lg border border-success/25 bg-success/10 px-4 py-3"
+        >
+          <span class="shrink-0 text-success-text" aria-hidden="true">
+            <nx-icon name="check" [size]="18" />
+          </span>
+          <p class="nx-body text-success-text">Organisation settings saved.</p>
+        </div>
+      }
+
+      <!-- Brand -->
+      <section class="mb-4 max-w-3xl rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+        <h2 class="nx-h3">Brand</h2>
+        <p class="nx-caption mt-1">
+          Shown beside the organisation name in the sidebar.
+        </p>
+
+        <div class="mt-4 flex flex-wrap items-center gap-5">
+          <!-- Preview, at the size it actually renders -->
+          <div class="flex items-center gap-3">
+            @if (logo(); as mark) {
+              <img
+                [src]="mark"
+                alt="Current logo"
+                class="h-14 w-14 rounded-lg border border-border-subtle object-contain"
+              />
+            } @else {
+              <span
+                class="flex h-14 w-14 items-center justify-center rounded-lg bg-primary text-white"
+                aria-hidden="true"
+              >
+                <nx-icon name="logo" [size]="28" />
+              </span>
+            }
+            <span class="nx-caption">
+              {{ logo() ? 'Custom logo' : 'Default mark' }}
+            </span>
+          </div>
+
+          @if (canEditSettings()) {
+            <div class="flex flex-wrap items-center gap-2">
+              <label
+                for="set-logo"
+                class="nx-button-text inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-border-subtle bg-surface px-3 text-content transition-colors hover:bg-background focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary"
+              >
+                <nx-icon name="download" [size]="18" class="text-content-secondary" />
+                {{ logo() ? 'Replace logo' : 'Upload logo' }}
+                <input
+                  id="set-logo"
+                  type="file"
+                  class="sr-only"
+                  [attr.accept]="logoAccept"
+                  (change)="onLogoPicked($event)"
+                />
+              </label>
+
+              @if (logo()) {
+                <button
+                  type="button"
+                  (click)="removeLogo()"
+                  class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg border border-border-subtle bg-surface px-3 text-content-secondary transition-colors hover:bg-danger/10 hover:text-danger-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  <nx-icon name="trash" [size]="18" />
+                  Remove
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        @if (logoError(); as error) {
+          <p role="alert" class="nx-caption mt-3 text-danger-text">{{ error }}</p>
+        }
+
+        <p class="nx-caption mt-3">
+          PNG, JPEG, SVG or WebP, up to {{ maxLogoKb }} kB. Stored in this browser only — there is
+          no file store yet, so the logo will not follow you to another device.
+        </p>
+      </section>
+
+      <form [formGroup]="orgForm" (ngSubmit)="saveOrganisation()" novalidate class="max-w-3xl">
+        <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+          <h2 class="nx-h3">Organisation profile</h2>
+
+          <div class="mt-4 grid gap-5 sm:grid-cols-2">
+            <div>
+              <label for="set-name" class="nx-table-header block">Organisation name *</label>
+              <input
+                id="set-name"
+                formControlName="name"
+                type="text"
+                [attr.aria-invalid]="invalid('name')"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+                [class]="invalid('name') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+              />
+              @if (invalid('name')) {
+                <p class="nx-caption mt-1 text-danger-text">{{ errorFor('name') }}</p>
+              }
+            </div>
+
+            <div>
+              <label for="set-domain" class="nx-table-header block">Primary domain *</label>
+              <input
+                id="set-domain"
+                formControlName="domain"
+                type="text"
+                [attr.aria-invalid]="invalid('domain')"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+                [class]="invalid('domain') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+              />
+              @if (invalid('domain')) {
+                <p class="nx-caption mt-1 text-danger-text">{{ errorFor('domain') }}</p>
+              }
+            </div>
+
+            <div>
+              <label for="set-timezone" class="nx-table-header block">Timezone *</label>
+              <select
+                id="set-timezone"
+                formControlName="timezone"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                @for (zone of timezones; track zone) {
+                  <option [value]="zone">{{ zone }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label for="set-weekStart" class="nx-table-header block">Week starts on *</label>
+              <select
+                id="set-weekStart"
+                formControlName="weekStart"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="Monday">Monday</option>
+                <option value="Sunday">Sunday</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="set-currency" class="nx-table-header block">Reporting currency *</label>
+              <select
+                id="set-currency"
+                formControlName="currency"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        @if (!canEditSettings()) {
+          <p class="nx-caption mt-4 rounded-md bg-background px-3 py-2">
+            You can view organisation settings but not change them — that needs
+            <span class="font-mono">settings.edit</span>.
+          </p>
+        }
+
+        <div class="mt-5 flex flex-wrap items-center justify-end gap-3" [hidden]="!canEditSettings()">
+          <button
+            type="button"
+            (click)="discard()"
+            [disabled]="!orgDirty()"
+            class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Discard
+          </button>
+          <button
+            type="submit"
+            [disabled]="!orgDirty()"
+            class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <nx-icon name="check" [size]="18" />
+            Save changes
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- Roles -->
+  @if (activeTab() === 'roles') {
+    <div role="tabpanel" id="spanel-roles" aria-labelledby="stab-roles" class="mt-6">
+      <div class="grid gap-4 lg:grid-cols-3">
+        <!-- Role list -->
+        <div class="overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-sm">
+          <div class="border-b border-border-subtle px-5 py-4">
+            <h2 class="nx-h3">Roles</h2>
+            <p class="nx-caption mt-1">{{ roles.length }} built-in roles</p>
+          </div>
+
+          <ul>
+            @for (role of roles; track role.id) {
+              <li class="border-b border-border-subtle last:border-b-0">
+                <button
+                  type="button"
+                  (click)="selectRole(role.id)"
+                  [attr.aria-current]="inspectedRole() === role.id ? 'true' : null"
+                  class="flex w-full items-start gap-3 px-5 py-3.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+                  [class]="inspectedRole() === role.id ? 'bg-primary/10' : 'hover:bg-background'"
+                >
+                  <span class="min-w-0 flex-1">
+                    <span
+                      class="nx-body block truncate font-medium"
+                      [class.text-primary-text]="inspectedRole() === role.id"
+                    >
+                      {{ role.name }}
+                    </span>
+                    <span class="nx-caption block truncate">{{ role.scope }}</span>
+                  </span>
+                  <span class="nx-caption shrink-0 tabular-nums">
+                    {{ role.permissions.length }}
+                  </span>
+                </button>
+              </li>
+            }
+          </ul>
+        </div>
+
+        <!-- Permission matrix -->
+        <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm lg:col-span-2">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 class="nx-h3">{{ inspected().name }}</h2>
+              <p class="nx-caption mt-1 max-w-lg">{{ inspected().description }}</p>
+            </div>
+            <span class="nx-caption shrink-0 rounded-full bg-background px-2.5 py-1 font-medium">
+              {{ inspected().permissions.length }} permissions
+            </span>
+          </div>
+
+          <div class="mt-5 space-y-5">
+            @for (group of permissionGroups; track group.label) {
+              <section>
+                <div class="flex items-baseline justify-between gap-3">
+                  <h3 class="nx-table-header">{{ group.label }}</h3>
+                  <span class="nx-caption tabular-nums">
+                    {{ grantedInGroup(group.permissions) }} / {{ group.permissions.length }}
+                  </span>
+                </div>
+
+                <ul class="mt-2 flex flex-wrap gap-2">
+                  @for (permission of group.permissions; track permission) {
+                    <li
+                      class="nx-caption inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1"
+                      [class]="
+                        roleHas(permission)
+                          ? 'border-success/25 bg-success/10 text-success-text'
+                          : 'border-border-subtle bg-background text-content-secondary'
+                      "
+                    >
+                      <!-- Tick or dash, never colour alone -->
+                      <span aria-hidden="true">
+                        @if (roleHas(permission)) {
+                          <nx-icon name="check" [size]="12" [strokeWidth]="3" />
+                        } @else {
+                          <nx-icon name="close" [size]="12" [strokeWidth]="3" />
+                        }
+                      </span>
+                      {{ verb(permission) }}
+                      <span class="sr-only">
+                        {{ roleHas(permission) ? 'granted' : 'not granted' }}
+                      </span>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+          </div>
+
+          <p class="nx-caption mt-6 rounded-md bg-background px-3 py-2">
+            @if (canManageRoles()) {
+              Role definitions are static configuration for now. Editing them lands with the
+              backend, where the permissions are actually enforced.
+            } @else {
+              You can view role definitions but not change them — that needs
+              <span class="font-mono">roles.manage</span>.
+            }
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Security -->
+  @if (activeTab() === 'security') {
+    <div
+      role="tabpanel"
+      id="spanel-security"
+      aria-labelledby="stab-security"
+      class="mt-6 max-w-3xl space-y-4"
+    >
+      <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+        <h2 class="nx-h3">Password policy</h2>
+
+        <div class="mt-4 grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="sec-minLength" class="nx-table-header block">Minimum length</label>
+            <input
+              id="sec-minLength"
+              type="number"
+              min="8"
+              max="64"
+              [value]="security().minPasswordLength"
+              (change)="onMinLength($event)"
+              class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 tabular-nums text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+            <p class="nx-caption mt-1">Between 8 and 64 characters.</p>
+          </div>
+
+          <div class="flex items-start gap-3 pt-6">
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="security().requireSymbols"
+              (click)="toggleSecurity('requireSymbols')"
+              class="mt-0.5 flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              [class]="security().requireSymbols ? 'bg-primary' : 'bg-border-subtle'"
+            >
+              <span
+                class="h-5 w-5 rounded-full bg-surface shadow-sm transition-transform"
+                [class]="security().requireSymbols ? 'translate-x-5' : 'translate-x-0'"
+              ></span>
+            </button>
+            <span>
+              <span class="nx-body block font-medium">Require symbols and numbers</span>
+              <span class="nx-caption block">Rejects passwords made only of letters.</span>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+        <h2 class="nx-h3">Authentication</h2>
+
+        <div class="mt-4 space-y-5">
+          <div class="flex items-start gap-3">
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="security().mfaRequired"
+              (click)="toggleSecurity('mfaRequired')"
+              class="mt-0.5 flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              [class]="security().mfaRequired ? 'bg-primary' : 'bg-border-subtle'"
+            >
+              <span
+                class="h-5 w-5 rounded-full bg-surface shadow-sm transition-transform"
+                [class]="security().mfaRequired ? 'translate-x-5' : 'translate-x-0'"
+              ></span>
+            </button>
+            <span>
+              <span class="nx-body block font-medium">Require multi-factor authentication</span>
+              <span class="nx-caption block">
+                Applies to every account. Blocked on the identity provider upgrade — see PRJ-221.
+              </span>
+            </span>
+          </div>
+
+          <div class="flex items-start gap-3">
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="security().ssoEnabled"
+              (click)="toggleSecurity('ssoEnabled')"
+              class="mt-0.5 flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              [class]="security().ssoEnabled ? 'bg-primary' : 'bg-border-subtle'"
+            >
+              <span
+                class="h-5 w-5 rounded-full bg-surface shadow-sm transition-transform"
+                [class]="security().ssoEnabled ? 'translate-x-5' : 'translate-x-0'"
+              ></span>
+            </button>
+            <span>
+              <span class="nx-body block font-medium">Single sign-on</span>
+              <span class="nx-caption block">Staff sign in through the corporate provider.</span>
+            </span>
+          </div>
+
+          <div class="flex items-start gap-3">
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="security().ipAllowlistEnabled"
+              (click)="toggleSecurity('ipAllowlistEnabled')"
+              class="mt-0.5 flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              [class]="security().ipAllowlistEnabled ? 'bg-primary' : 'bg-border-subtle'"
+            >
+              <span
+                class="h-5 w-5 rounded-full bg-surface shadow-sm transition-transform"
+                [class]="security().ipAllowlistEnabled ? 'translate-x-5' : 'translate-x-0'"
+              ></span>
+            </button>
+            <span>
+              <span class="nx-body block font-medium">Restrict access by IP</span>
+              <span class="nx-caption block">
+                Only listed office and VPN ranges may sign in. Remote staff would need the VPN.
+              </span>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+        <h2 class="nx-h3">Sessions</h2>
+
+        <div class="mt-4 max-w-xs">
+          <label for="sec-timeout" class="nx-table-header block">Idle timeout</label>
+          <select
+            id="sec-timeout"
+            [value]="security().sessionTimeoutMinutes"
+            (change)="onTimeout($event)"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option [value]="15">15 minutes</option>
+            <option [value]="30">30 minutes</option>
+            <option [value]="60">1 hour</option>
+            <option [value]="240">4 hours</option>
+            <option [value]="480">8 hours</option>
+          </select>
+          <p class="nx-caption mt-1">Signed-out users keep their unsaved drafts locally.</p>
+        </div>
+      </section>
+    </div>
+  }
+</div>

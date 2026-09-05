@@ -1,0 +1,162 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <h1 class="nx-h1">Documents</h1>
+      <p class="nx-body mt-1 text-content-secondary">
+        {{ total() }} documents across {{ folders().length }} folders.
+      </p>
+    </div>
+
+    <a
+      *hasPermission="'documents.upload'"
+      routerLink="/documents/new"
+      class="nx-button-text inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <nx-icon name="plus" [size]="18" />
+      Upload document
+    </a>
+  </div>
+
+  <div class="mt-6 grid gap-4 lg:grid-cols-4">
+    <!-- Folder tree -->
+    <nav class="rounded-lg border border-border-subtle bg-surface p-3 shadow-sm" aria-label="Folders">
+      <p class="nx-table-header px-2 pb-1.5">Folders</p>
+      <ul>
+        <li>
+          <button
+            type="button"
+            (click)="selectFolder('All')"
+            class="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            [class]="
+              folder() === 'All'
+                ? 'bg-primary/10 text-primary-text'
+                : 'text-content-secondary hover:bg-background hover:text-content'
+            "
+            [attr.aria-current]="folder() === 'All' ? 'true' : null"
+          >
+            <nx-icon name="folder" [size]="18" />
+            <span class="nx-body flex-1">All documents</span>
+            <span class="nx-caption">{{ total() }}</span>
+          </button>
+        </li>
+
+        @for (item of folders(); track item.name) {
+          <li>
+            <button
+              type="button"
+              (click)="selectFolder(item.name)"
+              class="mt-0.5 flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              [class]="
+                folder() === item.name
+                  ? 'bg-primary/10 text-primary-text'
+                  : 'text-content-secondary hover:bg-background hover:text-content'
+              "
+              [attr.aria-current]="folder() === item.name ? 'true' : null"
+            >
+              <nx-icon name="folder" [size]="18" />
+              <span class="nx-body flex-1 truncate">{{ item.name }}</span>
+              <span class="nx-caption">{{ item.count }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <!-- Document list -->
+    <div class="lg:col-span-3">
+      <div class="relative max-w-sm">
+        <label for="doc-search" class="sr-only">Search documents</label>
+        <span
+          class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-content-secondary"
+          aria-hidden="true"
+        >
+          <nx-icon name="search" [size]="18" />
+        </span>
+        <input
+          id="doc-search"
+          type="search"
+          [value]="search()"
+          (input)="onSearch($event)"
+          placeholder="Name, ID or tag…"
+          class="nx-body h-10 w-full rounded-lg border border-border-subtle bg-surface pl-10 pr-3 text-content placeholder:text-content-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+
+      <div class="mt-4 overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-sm">
+        @if (filtered().length > 0) {
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[760px] border-collapse text-left">
+              <caption class="sr-only">
+                Documents in {{ folder() === 'All' ? 'all folders' : folder() }}
+              </caption>
+              <thead>
+                <tr class="border-b border-border-subtle bg-background">
+                  <th scope="col" class="nx-table-header px-5 py-3">Document</th>
+                  <th scope="col" class="nx-table-header px-5 py-3">Owner</th>
+                  <th scope="col" class="nx-table-header px-5 py-3">Access</th>
+                  <th scope="col" class="nx-table-header px-5 py-3">Size</th>
+                  <th scope="col" class="nx-table-header px-5 py-3">Updated</th>
+                  <th scope="col" class="nx-table-header px-5 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border-subtle">
+                @for (document of filtered(); track document.id) {
+                  <tr class="transition-colors hover:bg-background">
+                    <th scope="row" class="px-5 py-3 font-normal">
+                      <a
+                        [routerLink]="['/documents', document.id]"
+                        class="flex items-center gap-3 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                      >
+                        <span
+                          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background text-content-secondary"
+                          aria-hidden="true"
+                        >
+                          <nx-icon name="document" [size]="18" />
+                        </span>
+                        <span class="min-w-0">
+                          <span class="nx-body block truncate font-medium text-content">
+                            {{ document.name }}
+                          </span>
+                          <span class="nx-caption block">
+                            {{ document.folder }} · {{ document.format }}
+                          </span>
+                        </span>
+                      </a>
+                    </th>
+                    <td class="nx-body px-5 py-3">{{ ownerName(document) }}</td>
+                    <td class="nx-body px-5 py-3 text-content-secondary">{{ document.access }}</td>
+                    <td class="nx-body px-5 py-3 tabular-nums text-content-secondary">
+                      {{ sizeLabel(document) }}
+                    </td>
+                    <td class="nx-body px-5 py-3 text-content-secondary">
+                      {{ document.updatedAt | date: 'd MMM y' }}
+                    </td>
+                    <td class="px-5 py-3">
+                      <nx-status-badge
+                        [label]="document.status"
+                        [tone]="toneFor(document.status)"
+                      />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="flex flex-col items-center justify-center px-6 py-16 text-center">
+            <span
+              class="flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+              aria-hidden="true"
+            >
+              <nx-icon name="document" [size]="24" />
+            </span>
+            <h2 class="nx-h3 mt-4">No documents here</h2>
+            <p class="nx-body mt-1 max-w-sm text-content-secondary">
+              Nothing matches this folder and search. Try another folder, or upload a document.
+            </p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

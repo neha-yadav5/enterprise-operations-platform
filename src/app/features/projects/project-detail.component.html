@@ -1,0 +1,508 @@
+@if (project(); as p) {
+  <div class="px-4 pb-10 pt-3 sm:px-6">
+    <a
+      routerLink="/projects"
+      class="nx-caption inline-flex items-center gap-1.5 rounded-md text-content-secondary transition-colors hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <nx-icon name="arrow-left" [size]="16" />
+      All projects
+    </a>
+
+    <!-- Header -->
+    <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h1 class="nx-h1">{{ p.name }}</h1>
+          <nx-status-badge [label]="p.status" [tone]="toneFor(p.status)" />
+        </div>
+        <p class="nx-caption mt-1">
+          <span class="font-mono">{{ p.id }}</span> · {{ p.department }} · due
+          {{ p.dueDate | date: 'd MMM y' }}
+        </p>
+      </div>
+
+      <div class="flex shrink-0 items-center gap-2">
+        <button
+          *hasPermission="'projects.manage_members'"
+          type="button"
+          (click)="startAddMember()"
+          [attr.aria-expanded]="addingMember()"
+          class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg border border-border-subtle bg-surface px-3 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <nx-icon name="user-plus" [size]="18" class="text-content-secondary" />
+          Add member
+        </button>
+        <a
+          *hasPermission="'projects.edit'"
+          [routerLink]="['/projects', p.id, 'edit']"
+          class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <nx-icon name="edit" [size]="18" />
+          Edit
+        </a>
+      </div>
+    </div>
+
+    <!-- Add member -->
+    @if (addingMember()) {
+      <div class="mt-4 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+        <h2 class="nx-h3">Add a team member</h2>
+
+        @if (assignable().length > 0) {
+          <div class="mt-4 flex flex-wrap items-end gap-4">
+            <div class="min-w-0 flex-1 sm:max-w-xs">
+              <label for="pm-person" class="nx-table-header block">Person</label>
+              <select
+                id="pm-person"
+                [value]="newMemberId()"
+                (change)="onMemberId($event)"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">Select a person</option>
+                @for (person of assignable(); track person.id) {
+                  <option [value]="person.id">{{ name(person) }} — {{ person.title }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="min-w-0 flex-1 sm:max-w-xs">
+              <label for="pm-role" class="nx-table-header block">Project role</label>
+              <input
+                id="pm-role"
+                type="text"
+                [value]="newMemberRole()"
+                (input)="onMemberRole($event)"
+                placeholder="Backend lead"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content placeholder:text-content-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            <div class="w-32">
+              <label for="pm-allocation" class="nx-table-header block">Allocation %</label>
+              <input
+                id="pm-allocation"
+                type="number"
+                min="1"
+                max="100"
+                [value]="newMemberAllocation()"
+                (input)="onMemberAllocation($event)"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 tabular-nums text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="cancelAddMember()"
+                class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                (click)="confirmAddMember()"
+                [disabled]="!canAddMember()"
+                class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <nx-icon name="check" [size]="18" />
+                Add
+              </button>
+            </div>
+          </div>
+        } @else {
+          <p class="nx-body mt-3 text-content-secondary">
+            Everyone active is already on this project.
+          </p>
+          <button
+            type="button"
+            (click)="cancelAddMember()"
+            class="nx-button-text mt-3 inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            Close
+          </button>
+        }
+      </div>
+    }
+
+    <!-- Progress strip -->
+    <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded-lg border border-border-subtle bg-surface p-4 shadow-sm">
+        <p class="nx-table-header">Progress</p>
+        <p class="nx-h2 mt-1.5 tabular-nums">{{ p.progress }}%</p>
+        <div class="mt-2">
+          <nx-progress-bar
+            [value]="p.progress"
+            [tone]="progressTone(p.status)"
+            [showValue]="false"
+            label="Overall progress"
+          />
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-border-subtle bg-surface p-4 shadow-sm">
+        <p class="nx-table-header">Timeline</p>
+        <p class="nx-body mt-1.5 font-medium">{{ p.startDate | date: 'd MMM y' }}</p>
+        <p class="nx-caption mt-0.5">to {{ p.dueDate | date: 'd MMM y' }}</p>
+      </div>
+
+      <div class="rounded-lg border border-border-subtle bg-surface p-4 shadow-sm">
+        <p class="nx-table-header">Project lead</p>
+        @if (lead(); as l) {
+          <a
+            [routerLink]="['/employees', l.id]"
+            class="mt-1.5 flex items-center gap-2.5 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <nx-avatar [initials]="initialsOf(l)" [size]="32" />
+            <span class="min-w-0">
+              <span class="nx-body block truncate font-medium">{{ name(l) }}</span>
+              <span class="nx-caption block truncate">{{ l.title }}</span>
+            </span>
+          </a>
+        } @else {
+          <p class="nx-body mt-1.5 text-content-secondary">Unassigned</p>
+        }
+      </div>
+
+      <div class="rounded-lg border border-border-subtle bg-surface p-4 shadow-sm">
+        <p class="nx-table-header">Open risks</p>
+        <p class="nx-h2 mt-1.5 tabular-nums">{{ openRisks().length }}</p>
+        <p class="nx-caption mt-0.5">
+          {{ p.members.length + 1 }} people on the team
+        </p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="mt-6 border-b border-border-subtle">
+      <div role="tablist" aria-label="Project sections" class="-mb-px flex gap-1 overflow-x-auto">
+        @for (tab of tabs; track tab.id) {
+          <button
+            type="button"
+            role="tab"
+            [id]="'ptab-' + tab.id"
+            [attr.aria-selected]="activeTab() === tab.id"
+            [attr.aria-controls]="'ppanel-' + tab.id"
+            [attr.tabindex]="activeTab() === tab.id ? 0 : -1"
+            (click)="activeTab.set(tab.id)"
+            class="nx-button-text shrink-0 border-b-2 px-3 py-2.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            [class]="
+              activeTab() === tab.id
+                ? 'border-primary text-primary-text'
+                : 'border-transparent text-content-secondary hover:border-border-subtle hover:text-content'
+            "
+          >
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Overview -->
+    @if (activeTab() === 'overview') {
+      <div
+        role="tabpanel"
+        id="ppanel-overview"
+        aria-labelledby="ptab-overview"
+        class="mt-6 grid gap-4 lg:grid-cols-3"
+      >
+        <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm lg:col-span-2">
+          <h2 class="nx-h3">About</h2>
+          <p class="nx-body mt-2 text-content-secondary">{{ p.description }}</p>
+
+          <h3 class="nx-h3 mt-6">Milestones</h3>
+          <ul class="mt-3 space-y-3">
+            @for (milestone of p.milestones; track milestone.name) {
+              <li class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <span class="nx-body w-40 shrink-0 font-medium">{{ milestone.name }}</span>
+                <span class="min-w-[140px] flex-1">
+                  <nx-progress-bar
+                    [value]="milestone.progress"
+                    [tone]="milestone.status === 'Complete' ? 'success' : 'primary'"
+                    [label]="milestone.name + ' progress'"
+                  />
+                </span>
+                <nx-status-badge
+                  [label]="milestone.status"
+                  [tone]="milestoneTone(milestone.status)"
+                  class="shrink-0"
+                />
+              </li>
+            } @empty {
+              <li class="nx-body text-content-secondary">No milestones defined.</li>
+            }
+          </ul>
+        </section>
+
+        <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+          <h2 class="nx-h3">Top risks</h2>
+
+          @if (openRisks().length > 0) {
+            <ul class="mt-3 space-y-4">
+              @for (risk of openRisks(); track risk.title) {
+                <li>
+                  <nx-status-badge
+                    [label]="risk.severity"
+                    [tone]="severityTone(risk.severity)"
+                  />
+                  <p class="nx-body mt-1.5 font-medium">{{ risk.title }}</p>
+                  <p class="nx-caption mt-1">Owner: {{ ownerName(risk.ownerId) }}</p>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="nx-body mt-3 text-content-secondary">No open risks.</p>
+          }
+        </section>
+      </div>
+    }
+
+    <!-- Team -->
+    @if (activeTab() === 'team') {
+      <div role="tabpanel" id="ppanel-team" aria-labelledby="ptab-team" class="mt-6">
+        <div class="overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[560px] border-collapse text-left">
+              <caption class="sr-only">
+                Project team
+              </caption>
+              <thead>
+                <tr class="border-b border-border-subtle bg-background">
+                  <th scope="col" class="nx-table-header px-5 py-3">Member</th>
+                  <th scope="col" class="nx-table-header px-5 py-3">Project role</th>
+                  <th scope="col" class="nx-table-header px-5 py-3">Allocation</th>
+                  <th scope="col" class="px-5 py-3"><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border-subtle">
+                @if (lead(); as l) {
+                  <tr class="hover:bg-background">
+                    <th scope="row" class="px-5 py-3 font-normal">
+                      <a
+                        [routerLink]="['/employees', l.id]"
+                        class="flex items-center gap-3 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                      >
+                        <nx-avatar [initials]="initialsOf(l)" [size]="32" />
+                        <span class="min-w-0">
+                          <span class="nx-body block truncate font-medium">{{ name(l) }}</span>
+                          <span class="nx-caption block truncate">{{ l.title }}</span>
+                        </span>
+                      </a>
+                    </th>
+                    <td class="nx-body px-5 py-3">Project lead</td>
+                    <td class="nx-body px-5 py-3 text-content-secondary">—</td>
+                    <td class="px-5 py-3"></td>
+                  </tr>
+                }
+
+                @for (entry of team(); track entry.employee.id) {
+                  <tr class="hover:bg-background">
+                    <th scope="row" class="px-5 py-3 font-normal">
+                      <a
+                        [routerLink]="['/employees', entry.employee.id]"
+                        class="flex items-center gap-3 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                      >
+                        <nx-avatar [initials]="initialsOf(entry.employee)" [size]="32" />
+                        <span class="min-w-0">
+                          <span class="nx-body block truncate font-medium">
+                            {{ name(entry.employee) }}
+                          </span>
+                          <span class="nx-caption block truncate">{{ entry.employee.title }}</span>
+                        </span>
+                      </a>
+                    </th>
+                    <td class="nx-body px-5 py-3">{{ entry.member.role }}</td>
+                    <td class="px-5 py-3">
+                      <span class="block max-w-[160px]">
+                        <nx-progress-bar
+                          [value]="entry.member.allocation"
+                          [label]="name(entry.employee) + ' allocation'"
+                        />
+                      </span>
+                    </td>
+                    <td class="px-5 py-3 text-right">
+                      <button
+                        type="button"
+                        (click)="removeMember(entry.employee.id)"
+                        class="flex h-8 w-8 items-center justify-center rounded-md text-content-secondary transition-colors hover:bg-danger/10 hover:text-danger-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                        [attr.aria-label]="'Remove ' + name(entry.employee) + ' from the project'"
+                      >
+                        <nx-icon name="trash" [size]="16" />
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="nx-body px-5 py-8 text-center text-content-secondary">
+                      No members beyond the project lead.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Milestones -->
+    @if (activeTab() === 'milestones') {
+      <div role="tabpanel" id="ppanel-milestones" aria-labelledby="ptab-milestones" class="mt-6">
+        <ul class="space-y-3">
+          @for (milestone of p.milestones; track milestone.name) {
+            <li class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 class="nx-h3">{{ milestone.name }}</h2>
+                  <p class="nx-caption mt-1">Due {{ milestone.due | date: 'd MMM y' }}</p>
+                </div>
+                <nx-status-badge
+                  [label]="milestone.status"
+                  [tone]="milestoneTone(milestone.status)"
+                />
+              </div>
+              <div class="mt-4">
+                <nx-progress-bar
+                  [value]="milestone.progress"
+                  [tone]="milestone.status === 'Complete' ? 'success' : 'primary'"
+                  [label]="milestone.name + ' progress'"
+                />
+              </div>
+            </li>
+          } @empty {
+            <li
+              class="rounded-lg border border-dashed border-border-subtle bg-surface px-6 py-16 text-center"
+            >
+              <h2 class="nx-h3">No milestones yet</h2>
+              <p class="nx-body mt-1 text-content-secondary">
+                Milestones break the project into checkpoints with their own due dates.
+              </p>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <!-- Risks -->
+    @if (activeTab() === 'risks') {
+      <div role="tabpanel" id="ppanel-risks" aria-labelledby="ptab-risks" class="mt-6">
+        <ul class="space-y-3">
+          @for (risk of openRisks(); track risk.title) {
+            <li class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <h2 class="nx-h3 min-w-0">{{ risk.title }}</h2>
+                <nx-status-badge
+                  [label]="risk.severity"
+                  [tone]="severityTone(risk.severity)"
+                  class="shrink-0"
+                />
+              </div>
+              <p class="nx-caption mt-2">Owner: {{ ownerName(risk.ownerId) }}</p>
+              <p class="nx-body mt-2 text-content-secondary">{{ risk.mitigation }}</p>
+            </li>
+          } @empty {
+            <li
+              class="rounded-lg border border-dashed border-border-subtle bg-surface px-6 py-16 text-center"
+            >
+              <h2 class="nx-h3">No open risks</h2>
+              <p class="nx-body mt-1 text-content-secondary">
+                Nothing is currently flagged against this project.
+              </p>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <!-- Budget -->
+    @if (activeTab() === 'budget') {
+      <div role="tabpanel" id="ppanel-budget" aria-labelledby="ptab-budget" class="mt-6">
+        <div class="grid gap-4 sm:grid-cols-3">
+          <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+            <p class="nx-table-header">Budget</p>
+            <p class="nx-h2 mt-1.5 tabular-nums">
+              {{ p.budget | currency: 'USD' : 'symbol' : '1.0-0' }}
+            </p>
+          </div>
+          <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+            <p class="nx-table-header">Spent</p>
+            <p class="nx-h2 mt-1.5 tabular-nums">
+              {{ p.spent | currency: 'USD' : 'symbol' : '1.0-0' }}
+            </p>
+          </div>
+          <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+            <p class="nx-table-header">Remaining</p>
+            <p
+              class="nx-h2 mt-1.5 tabular-nums"
+              [class]="remaining() < 0 ? 'text-danger-text' : ''"
+            >
+              {{ remaining() | currency: 'USD' : 'symbol' : '1.0-0' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-4 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+          <div class="flex items-baseline justify-between gap-3">
+            <h2 class="nx-h3">Budget consumed</h2>
+            <span class="nx-body font-medium tabular-nums">{{ budgetUsedPct() }}%</span>
+          </div>
+          <div class="mt-3">
+            <nx-progress-bar
+              [value]="budgetUsedPct()"
+              [tone]="budgetTone()"
+              [showValue]="false"
+              label="Budget consumed"
+            />
+          </div>
+          <p class="nx-caption mt-2">
+            {{ p.spent | number }} of {{ p.budget | number }} USD committed.
+          </p>
+        </div>
+      </div>
+    }
+
+    <!-- Activity -->
+    @if (activeTab() === 'activity') {
+      <div
+        role="tabpanel"
+        id="ppanel-activity"
+        aria-labelledby="ptab-activity"
+        class="mt-6 rounded-lg border border-dashed border-border-subtle bg-surface px-6 py-16 text-center"
+      >
+        <span
+          class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+          aria-hidden="true"
+        >
+          <nx-icon name="audit" [size]="24" />
+        </span>
+        <h2 class="nx-h3 mt-4">No activity recorded</h2>
+        <p class="nx-body mx-auto mt-1 max-w-md text-content-secondary">
+          The project audit trail is populated once the backend records events.
+        </p>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="px-4 pb-10 pt-3 sm:px-6">
+    <div
+      class="flex flex-col items-center justify-center rounded-lg border border-border-subtle bg-surface px-6 py-20 text-center"
+    >
+      <span
+        class="flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+        aria-hidden="true"
+      >
+        <nx-icon name="folder" [size]="24" />
+      </span>
+      <h1 class="nx-h2 mt-4">Project not found</h1>
+      <p class="nx-body mt-1 max-w-sm text-content-secondary">
+        No project matches that identifier. It may have been archived, or the link may be wrong.
+      </p>
+      <a
+        routerLink="/projects"
+        class="nx-button-text mt-5 inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="arrow-left" [size]="18" />
+        Back to projects
+      </a>
+    </div>
+  </div>
+}

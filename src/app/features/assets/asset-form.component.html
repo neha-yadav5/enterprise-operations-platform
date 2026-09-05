@@ -1,0 +1,255 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <a
+    routerLink="/assets"
+    class="nx-caption inline-flex items-center gap-1.5 rounded-md text-content-secondary transition-colors hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+  >
+    <nx-icon name="arrow-left" [size]="16" />
+    All assets
+  </a>
+
+  <h1 class="nx-h1 mt-3">{{ isEdit ? 'Edit asset' : 'Register asset' }}</h1>
+  <p class="nx-body mt-1 text-content-secondary">
+    {{
+      isEdit
+        ? 'The asset ID is the record key and cannot be changed.'
+        : 'Adds the asset to inventory and opens its history with a registration entry.'
+    }}
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="mt-6 max-w-3xl">
+    @if (submitted() && form.invalid) {
+      <div
+        role="alert"
+        class="mb-5 flex items-start gap-3 rounded-lg border border-danger/25 bg-danger/10 px-4 py-3"
+      >
+        <span class="mt-0.5 shrink-0 text-danger-text" aria-hidden="true">
+          <nx-icon name="close" [size]="18" />
+        </span>
+        <p class="nx-body text-danger-text">
+          Some fields need attention. Check the highlighted values below.
+        </p>
+      </div>
+    }
+
+    <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+      <h2 class="nx-h3">Identity</h2>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-2">
+        <div class="sm:col-span-2">
+          <label for="ast-name" class="nx-table-header block">Asset name *</label>
+          <input
+            id="ast-name"
+            formControlName="name"
+            type="text"
+            placeholder='MacBook Pro 16" M4'
+            [attr.aria-invalid]="invalid('name')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="invalid('name') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+          />
+          @if (invalid('name')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('name') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="ast-id" class="nx-table-header block">Asset ID</label>
+          <input
+            id="ast-id"
+            formControlName="id"
+            type="text"
+            [placeholder]="placeholderId + ' (auto)'"
+            [attr.aria-invalid]="invalid('id')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 font-mono text-content focus:outline-none focus:ring-2"
+            [class]="invalid('id') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+          />
+          @if (invalid('id')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('id') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="ast-serialNumber" class="nx-table-header block">Serial number *</label>
+          <input
+            id="ast-serialNumber"
+            formControlName="serialNumber"
+            type="text"
+            [attr.aria-invalid]="invalid('serialNumber')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 font-mono text-content focus:outline-none focus:ring-2"
+            [class]="invalid('serialNumber') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+          />
+          @if (invalid('serialNumber')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('serialNumber') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="ast-category" class="nx-table-header block">Category *</label>
+          <select
+            id="ast-category"
+            formControlName="category"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            @for (item of categories; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label for="ast-vendor" class="nx-table-header block">Vendor *</label>
+          <input
+            id="ast-vendor"
+            formControlName="vendor"
+            type="text"
+            [attr.aria-invalid]="invalid('vendor')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="invalid('vendor') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+          />
+          @if (invalid('vendor')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('vendor') }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+      <h2 class="nx-h3">Assignment</h2>
+
+      @if (assigneeMismatch) {
+        <p role="alert" class="nx-caption mt-3 text-danger-text">
+          An asset marked <strong>Assigned</strong> needs a holder, and any other status must have
+          none.
+        </p>
+      }
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-3">
+        <div>
+          <label for="ast-status" class="nx-table-header block">Status *</label>
+          <select
+            id="ast-status"
+            formControlName="status"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="assigneeMismatch ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+          >
+            @for (item of statuses; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label for="ast-assigneeId" class="nx-table-header block">Assigned to</label>
+          <select
+            id="ast-assigneeId"
+            formControlName="assigneeId"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="assigneeMismatch ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+          >
+            <option value="">Nobody</option>
+            @for (person of people(); track person.id) {
+              <option [value]="person.id">{{ name(person) }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label for="ast-location" class="nx-table-header block">Location *</label>
+          <select
+            id="ast-location"
+            formControlName="location"
+            [attr.aria-invalid]="invalid('location')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="invalid('location') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+          >
+            <option value="">Select a location</option>
+            @for (item of locations; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+          @if (invalid('location')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('location') }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+      <h2 class="nx-h3">Purchase</h2>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-3">
+        <div>
+          <label for="ast-purchaseDate" class="nx-table-header block">Purchase date *</label>
+          <input
+            id="ast-purchaseDate"
+            formControlName="purchaseDate"
+            type="date"
+            [attr.aria-invalid]="invalid('purchaseDate')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="invalid('purchaseDate') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+          />
+          @if (invalid('purchaseDate')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('purchaseDate') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="ast-purchaseCost" class="nx-table-header block">Cost (USD) *</label>
+          <input
+            id="ast-purchaseCost"
+            formControlName="purchaseCost"
+            type="number"
+            min="0"
+            step="10"
+            [attr.aria-invalid]="invalid('purchaseCost')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 tabular-nums text-content focus:outline-none focus:ring-2"
+            [class]="invalid('purchaseCost') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+          />
+          @if (invalid('purchaseCost')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('purchaseCost') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="ast-warrantyEnd" class="nx-table-header block">Warranty ends *</label>
+          <input
+            id="ast-warrantyEnd"
+            formControlName="warrantyEnd"
+            type="date"
+            [attr.aria-invalid]="invalid('warrantyEnd')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="invalid('warrantyEnd') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+          />
+          @if (invalid('warrantyEnd')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('warrantyEnd') }}</p>
+          }
+        </div>
+
+        <div class="sm:col-span-3">
+          <label for="ast-notes" class="nx-table-header block">Notes</label>
+          <textarea
+            id="ast-notes"
+            formControlName="notes"
+            rows="3"
+            class="nx-body mt-1.5 w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5 flex flex-wrap items-center justify-end gap-3">
+      <a
+        routerLink="/assets"
+        class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        Cancel
+      </a>
+      <button
+        type="submit"
+        class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="check" [size]="18" />
+        {{ isEdit ? 'Save changes' : 'Register asset' }}
+      </button>
+    </div>
+  </form>
+</div>

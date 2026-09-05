@@ -1,0 +1,269 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <a
+    routerLink="/projects"
+    class="nx-caption inline-flex items-center gap-1.5 rounded-md text-content-secondary transition-colors hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+  >
+    <nx-icon name="arrow-left" [size]="16" />
+    All projects
+  </a>
+
+  <h1 class="nx-h1 mt-3">{{ isEdit ? 'Edit project' : 'New project' }}</h1>
+  <p class="nx-body mt-1 text-content-secondary">
+    {{
+      isEdit
+        ? 'The project code is the record key and cannot be changed. Team, milestones and risks are managed from the workspace.'
+        : 'Team members, milestones and risks are added from the project workspace once it exists.'
+    }}
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="mt-6 max-w-3xl">
+    @if (submitted() && form.invalid) {
+      <div
+        role="alert"
+        class="mb-5 flex items-start gap-3 rounded-lg border border-danger/25 bg-danger/10 px-4 py-3"
+      >
+        <span class="mt-0.5 shrink-0 text-danger-text" aria-hidden="true">
+          <nx-icon name="close" [size]="18" />
+        </span>
+        <p class="nx-body text-danger-text">
+          Some fields need attention. Check the highlighted values below.
+        </p>
+      </div>
+    }
+
+    <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+      <h2 class="nx-h3">Basics</h2>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-2">
+        <div class="sm:col-span-2">
+          <label for="prj-name" class="nx-table-header block">Project name *</label>
+          <input
+            id="prj-name"
+            formControlName="name"
+            type="text"
+            placeholder="Payroll Migration"
+            [attr.aria-invalid]="invalid('name')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('name')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('name')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('name') }}</p>
+          }
+        </div>
+
+        <div class="sm:col-span-2">
+          <label for="prj-description" class="nx-table-header block">Description *</label>
+          <textarea
+            id="prj-description"
+            formControlName="description"
+            rows="3"
+            placeholder="What this project delivers, and what done looks like."
+            [attr.aria-invalid]="invalid('description')"
+            class="nx-body mt-1.5 w-full rounded-lg border bg-surface px-3 py-2 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('description')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          ></textarea>
+          @if (invalid('description')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('description') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="prj-id" class="nx-table-header block">Project code</label>
+          <input
+            id="prj-id"
+            formControlName="id"
+            type="text"
+            [placeholder]="placeholderId + ' (auto)'"
+            [attr.aria-invalid]="invalid('id')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 font-mono text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('id')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('id')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('id') }}</p>
+          } @else {
+            <p class="nx-caption mt-1">Leave blank to assign the next free code.</p>
+          }
+        </div>
+
+        <div>
+          <label for="prj-department" class="nx-table-header block">Department *</label>
+          <select
+            id="prj-department"
+            formControlName="department"
+            [attr.aria-invalid]="invalid('department')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('department')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          >
+            <option value="">Select a department</option>
+            @for (item of departments; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+          @if (invalid('department')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('department') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="prj-leadId" class="nx-table-header block">Project lead *</label>
+          <select
+            id="prj-leadId"
+            formControlName="leadId"
+            [attr.aria-invalid]="invalid('leadId')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('leadId')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          >
+            <option value="">Select a lead</option>
+            @for (person of leads(); track person.id) {
+              <option [value]="person.id">{{ name(person) }} — {{ person.title }}</option>
+            }
+          </select>
+          @if (invalid('leadId')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('leadId') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="prj-status" class="nx-table-header block">Status *</label>
+          <select
+            id="prj-status"
+            formControlName="status"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            @for (item of statuses; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+      <h2 class="nx-h3">Schedule &amp; budget</h2>
+
+      @if (dateOrderInvalid) {
+        <p role="alert" class="nx-caption mt-3 text-danger-text">
+          The due date cannot fall before the start date.
+        </p>
+      }
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-2">
+        <div>
+          <label for="prj-startDate" class="nx-table-header block">Start date *</label>
+          <input
+            id="prj-startDate"
+            formControlName="startDate"
+            type="date"
+            [attr.aria-invalid]="invalid('startDate') || dateOrderInvalid"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('startDate') || dateOrderInvalid
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('startDate')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('startDate') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="prj-dueDate" class="nx-table-header block">Due date *</label>
+          <input
+            id="prj-dueDate"
+            formControlName="dueDate"
+            type="date"
+            [attr.aria-invalid]="invalid('dueDate') || dateOrderInvalid"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('dueDate') || dateOrderInvalid
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('dueDate')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('dueDate') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="prj-budget" class="nx-table-header block">Budget (USD) *</label>
+          <input
+            id="prj-budget"
+            formControlName="budget"
+            type="number"
+            min="0"
+            step="1000"
+            [attr.aria-invalid]="invalid('budget')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 tabular-nums text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('budget')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('budget')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('budget') }}</p>
+          }
+        </div>
+
+        <div>
+          <label for="prj-progress" class="nx-table-header block">Progress (%) *</label>
+          <input
+            id="prj-progress"
+            formControlName="progress"
+            type="number"
+            min="0"
+            max="100"
+            [attr.aria-invalid]="invalid('progress')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 tabular-nums text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('progress')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('progress')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('progress') }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5 flex flex-wrap items-center justify-end gap-3">
+      <a
+        routerLink="/projects"
+        class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        Cancel
+      </a>
+      <button
+        type="submit"
+        class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="check" [size]="18" />
+        {{ isEdit ? 'Save changes' : 'Create project' }}
+      </button>
+    </div>
+  </form>
+</div>

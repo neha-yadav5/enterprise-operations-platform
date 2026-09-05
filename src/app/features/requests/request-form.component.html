@@ -1,0 +1,286 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <a
+    routerLink="/requests"
+    class="nx-caption inline-flex items-center gap-1.5 rounded-md text-content-secondary transition-colors hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+  >
+    <nx-icon name="arrow-left" [size]="16" />
+    All requests
+  </a>
+
+  <h1 class="nx-h1 mt-3">Raise a request</h1>
+  <p class="nx-body mt-1 text-content-secondary">
+    The approval chain is assigned automatically from the request type.
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="mt-6 max-w-3xl">
+    @if (submitted() && form.invalid) {
+      <div
+        role="alert"
+        class="mb-5 flex items-start gap-3 rounded-lg border border-danger/25 bg-danger/10 px-4 py-3"
+      >
+        <span class="mt-0.5 shrink-0 text-danger-text" aria-hidden="true">
+          <nx-icon name="close" [size]="18" />
+        </span>
+        <p class="nx-body text-danger-text">
+          Some fields need attention. Check the highlighted values below.
+        </p>
+      </div>
+    }
+
+    <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+      <h2 class="nx-h3">Request</h2>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-2">
+        <div>
+          <label for="rq-type" class="nx-table-header block">Type *</label>
+          <select
+            id="rq-type"
+            formControlName="type"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            @for (item of types; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+          <p class="nx-caption mt-1">Changing the type changes the fields below.</p>
+        </div>
+
+        <div>
+          <label for="rq-requesterId" class="nx-table-header block">Requester *</label>
+          <select
+            id="rq-requesterId"
+            formControlName="requesterId"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            @for (person of people(); track person.id) {
+              <option [value]="person.id">{{ name(person) }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="sm:col-span-2">
+          <label for="rq-title" class="nx-table-header block">Title *</label>
+          <input
+            id="rq-title"
+            formControlName="title"
+            type="text"
+            placeholder="Annual leave — 12 to 14 August"
+            [attr.aria-invalid]="invalid('title')"
+            class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+            [class]="
+              invalid('title')
+                ? 'border-danger focus:border-danger focus:ring-danger/20'
+                : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+            "
+          />
+          @if (invalid('title')) {
+            <p class="nx-caption mt-1 text-danger-text">{{ errorFor('title') }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+      <h2 class="nx-h3">Details</h2>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-2">
+        @if (shows('leaveType')) {
+          <div>
+            <label for="rq-leaveType" class="nx-table-header block">{{ labelFor('leaveType') }} *</label>
+            <select
+              id="rq-leaveType"
+              formControlName="leaveType"
+              [attr.aria-invalid]="invalid('leaveType')"
+              class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+              [class]="
+                invalid('leaveType')
+                  ? 'border-danger focus:border-danger focus:ring-danger/20'
+                  : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+              "
+            >
+              <option value="">Select a leave type</option>
+              <option value="Annual leave">Annual leave</option>
+              <option value="Sick leave">Sick leave</option>
+              <option value="Parental leave">Parental leave</option>
+              <option value="Unpaid leave">Unpaid leave</option>
+            </select>
+            @if (invalid('leaveType')) {
+              <p class="nx-caption mt-1 text-danger-text">{{ errorFor('leaveType') }}</p>
+            }
+          </div>
+        }
+
+        @if (shows('destination')) {
+          <div>
+            <label for="rq-destination" class="nx-table-header block">
+              {{ labelFor('destination') }} *
+            </label>
+            <input
+              id="rq-destination"
+              formControlName="destination"
+              type="text"
+              [attr.aria-invalid]="invalid('destination')"
+              class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+              [class]="
+                invalid('destination')
+                  ? 'border-danger focus:border-danger focus:ring-danger/20'
+                  : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+              "
+            />
+            @if (invalid('destination')) {
+              <p class="nx-caption mt-1 text-danger-text">{{ errorFor('destination') }}</p>
+            }
+          </div>
+        }
+
+        @if (shows('vendor')) {
+          <div>
+            <label for="rq-vendor" class="nx-table-header block">{{ labelFor('vendor') }} *</label>
+            <input
+              id="rq-vendor"
+              formControlName="vendor"
+              type="text"
+              [attr.aria-invalid]="invalid('vendor')"
+              class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+              [class]="
+                invalid('vendor')
+                  ? 'border-danger focus:border-danger focus:ring-danger/20'
+                  : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+              "
+            />
+            @if (invalid('vendor')) {
+              <p class="nx-caption mt-1 text-danger-text">{{ errorFor('vendor') }}</p>
+            }
+          </div>
+        }
+
+        @if (shows('quantity')) {
+          <div>
+            <label for="rq-quantity" class="nx-table-header block">{{ labelFor('quantity') }} *</label>
+            <input
+              id="rq-quantity"
+              formControlName="quantity"
+              type="text"
+              placeholder="4 seats"
+              [attr.aria-invalid]="invalid('quantity')"
+              class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+              [class]="
+                invalid('quantity')
+                  ? 'border-danger focus:border-danger focus:ring-danger/20'
+                  : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+              "
+            />
+            @if (invalid('quantity')) {
+              <p class="nx-caption mt-1 text-danger-text">{{ errorFor('quantity') }}</p>
+            }
+          </div>
+        }
+
+        @if (shows('startDate')) {
+          <div>
+            <label for="rq-startDate" class="nx-table-header block">{{ labelFor('startDate') }} *</label>
+            <input
+              id="rq-startDate"
+              formControlName="startDate"
+              type="date"
+              [attr.aria-invalid]="invalid('startDate')"
+              class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+              [class]="
+                invalid('startDate')
+                  ? 'border-danger focus:border-danger focus:ring-danger/20'
+                  : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+              "
+            />
+            @if (invalid('startDate')) {
+              <p class="nx-caption mt-1 text-danger-text">{{ errorFor('startDate') }}</p>
+            }
+          </div>
+        }
+
+        @if (shows('endDate')) {
+          <div>
+            <label for="rq-endDate" class="nx-table-header block">{{ labelFor('endDate') }} *</label>
+            <input
+              id="rq-endDate"
+              formControlName="endDate"
+              type="date"
+              [attr.aria-invalid]="invalid('endDate')"
+              class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+              [class]="
+                invalid('endDate')
+                  ? 'border-danger focus:border-danger focus:ring-danger/20'
+                  : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+              "
+            />
+            @if (invalid('endDate')) {
+              <p class="nx-caption mt-1 text-danger-text">{{ errorFor('endDate') }}</p>
+            }
+          </div>
+        }
+
+        @if (needsAmount()) {
+          <div>
+            <label for="rq-amount" class="nx-table-header block">Amount (USD) *</label>
+            <input
+              id="rq-amount"
+              formControlName="amount"
+              type="number"
+              min="0"
+              step="10"
+              [attr.aria-invalid]="invalid('amount')"
+              class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 tabular-nums text-content focus:outline-none focus:ring-2"
+              [class]="
+                invalid('amount')
+                  ? 'border-danger focus:border-danger focus:ring-danger/20'
+                  : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+              "
+            />
+            @if (invalid('amount')) {
+              <p class="nx-caption mt-1 text-danger-text">{{ errorFor('amount') }}</p>
+            }
+          </div>
+        }
+
+        @if (shows('justification')) {
+          <div class="sm:col-span-2">
+            <label for="rq-justification" class="nx-table-header block">
+              {{ labelFor('justification') }} *
+            </label>
+            <textarea
+              id="rq-justification"
+              formControlName="justification"
+              rows="3"
+              placeholder="Why this is needed."
+              [attr.aria-invalid]="invalid('justification')"
+              class="nx-body mt-1.5 w-full rounded-lg border bg-surface px-3 py-2 text-content focus:outline-none focus:ring-2"
+              [class]="
+                invalid('justification')
+                  ? 'border-danger focus:border-danger focus:ring-danger/20'
+                  : 'border-border-subtle focus:border-primary focus:ring-primary/20'
+              "
+            ></textarea>
+            @if (invalid('justification')) {
+              <p class="nx-caption mt-1 text-danger-text">{{ errorFor('justification') }}</p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="mt-5 flex flex-wrap items-center justify-end gap-3">
+      <a
+        routerLink="/requests"
+        class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        Cancel
+      </a>
+      <button
+        type="submit"
+        class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="check" [size]="18" />
+        Submit request
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,283 @@
+@if (asset(); as a) {
+  <div class="px-4 pb-10 pt-3 sm:px-6">
+    <a
+      routerLink="/assets"
+      class="nx-caption inline-flex items-center gap-1.5 rounded-md text-content-secondary transition-colors hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <nx-icon name="arrow-left" [size]="16" />
+      All assets
+    </a>
+
+    <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h1 class="nx-h1">{{ a.name }}</h1>
+          <nx-status-badge [label]="a.status" [tone]="toneFor(a.status)" />
+        </div>
+        <p class="nx-caption mt-1">
+          <span class="font-mono">{{ a.id }}</span> · {{ a.category }} · serial
+          <span class="font-mono">{{ a.serialNumber }}</span>
+        </p>
+      </div>
+
+      <div class="flex shrink-0 items-center gap-2">
+        <button
+          *hasPermission="'assets.assign'"
+          type="button"
+          (click)="startReassign()"
+          [attr.aria-expanded]="reassigning()"
+          class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg border border-border-subtle bg-surface px-3 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <nx-icon name="user-plus" [size]="18" class="text-content-secondary" />
+          Reassign
+        </button>
+        <a
+          *hasPermission="'assets.edit'"
+          [routerLink]="['/assets', a.id, 'edit']"
+          class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <nx-icon name="edit" [size]="18" />
+          Edit
+        </a>
+      </div>
+    </div>
+
+    <!-- Reassign -->
+    @if (reassigning()) {
+      <div class="mt-4 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+        <h2 class="nx-h3">Reassign asset</h2>
+        <p class="nx-caption mt-1">
+          Status follows the holder — assigning sets it to Assigned, clearing it returns the asset
+          to stock. Either way the change is written to the history.
+        </p>
+
+        <div class="mt-4 flex flex-wrap items-end gap-4">
+          <div class="min-w-0 flex-1 sm:max-w-sm">
+            <label for="as-assignee" class="nx-table-header block">Assign to</label>
+            <select
+              id="as-assignee"
+              [value]="nextAssignee()"
+              (change)="onAssignee($event)"
+              class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="">Nobody — return to stock</option>
+              @for (person of people(); track person.id) {
+                <option [value]="person.id">{{ name(person) }} — {{ person.department }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              (click)="cancelReassign()"
+              class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              (click)="confirmReassign()"
+              class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <nx-icon name="check" [size]="18" />
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Summary -->
+    <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded-lg border border-border-subtle bg-surface p-4 shadow-sm">
+        <p class="nx-table-header">Assigned to</p>
+        @if (assignee(); as who) {
+          <a
+            [routerLink]="['/employees', who.id]"
+            class="mt-1.5 flex items-center gap-2.5 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <nx-avatar [initials]="initialsOf(who)" [size]="32" />
+            <span class="nx-body min-w-0 truncate font-medium">{{ name(who) }}</span>
+          </a>
+        } @else {
+          <p class="nx-body mt-1.5 text-content-secondary">Unassigned</p>
+        }
+      </div>
+
+      <div class="rounded-lg border border-border-subtle bg-surface p-4 shadow-sm">
+        <p class="nx-table-header">Warranty</p>
+        <p class="nx-body mt-1.5 font-medium">{{ a.warrantyEnd | date: 'd MMM y' }}</p>
+        <div class="mt-1.5">
+          <nx-status-badge [label]="warrantyLabel()" [tone]="warrantyTone()" />
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-border-subtle bg-surface p-4 shadow-sm">
+        <p class="nx-table-header">Purchase cost</p>
+        <p class="nx-h2 mt-1.5 tabular-nums">
+          {{ a.purchaseCost | currency: 'USD' : 'symbol' : '1.0-0' }}
+        </p>
+        <p class="nx-caption mt-0.5">{{ a.purchaseDate | date: 'd MMM y' }}</p>
+      </div>
+
+      <div class="rounded-lg border border-border-subtle bg-surface p-4 shadow-sm">
+        <p class="nx-table-header">Location</p>
+        <p class="nx-body mt-1.5 font-medium">{{ a.location }}</p>
+        <p class="nx-caption mt-0.5">{{ a.vendor }}</p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="mt-6 border-b border-border-subtle">
+      <div role="tablist" aria-label="Asset sections" class="-mb-px flex gap-1 overflow-x-auto">
+        @for (tab of tabs; track tab.id) {
+          <button
+            type="button"
+            role="tab"
+            [id]="'atab-' + tab.id"
+            [attr.aria-selected]="activeTab() === tab.id"
+            [attr.aria-controls]="'apanel-' + tab.id"
+            [attr.tabindex]="activeTab() === tab.id ? 0 : -1"
+            (click)="activeTab.set(tab.id)"
+            class="nx-button-text shrink-0 border-b-2 px-3 py-2.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            [class]="
+              activeTab() === tab.id
+                ? 'border-primary text-primary-text'
+                : 'border-transparent text-content-secondary hover:border-border-subtle hover:text-content'
+            "
+          >
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (activeTab() === 'overview') {
+      <div
+        role="tabpanel"
+        id="apanel-overview"
+        aria-labelledby="atab-overview"
+        class="mt-6 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm"
+      >
+        <h2 class="nx-h3">Details</h2>
+        <dl class="mt-4 grid gap-x-6 gap-y-4 sm:grid-cols-3">
+          <div>
+            <dt class="nx-table-header">Category</dt>
+            <dd class="nx-body mt-1">{{ a.category }}</dd>
+          </div>
+          <div>
+            <dt class="nx-table-header">Serial number</dt>
+            <dd class="nx-body mt-1 font-mono">{{ a.serialNumber }}</dd>
+          </div>
+          <div>
+            <dt class="nx-table-header">Vendor</dt>
+            <dd class="nx-body mt-1">{{ a.vendor }}</dd>
+          </div>
+          <div>
+            <dt class="nx-table-header">Purchased</dt>
+            <dd class="nx-body mt-1">{{ a.purchaseDate | date: 'd MMMM y' }}</dd>
+          </div>
+          <div>
+            <dt class="nx-table-header">Warranty ends</dt>
+            <dd class="nx-body mt-1">{{ a.warrantyEnd | date: 'd MMMM y' }}</dd>
+          </div>
+          <div>
+            <dt class="nx-table-header">Status</dt>
+            <dd class="mt-1"><nx-status-badge [label]="a.status" [tone]="toneFor(a.status)" /></dd>
+          </div>
+        </dl>
+
+        @if (a.notes) {
+          <div class="mt-6">
+            <h3 class="nx-table-header">Notes</h3>
+            <p class="nx-body mt-1.5 text-content-secondary">{{ a.notes }}</p>
+          </div>
+        }
+      </div>
+    }
+
+    @if (activeTab() === 'history') {
+      <div
+        role="tabpanel"
+        id="apanel-history"
+        aria-labelledby="atab-history"
+        class="mt-6 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm"
+      >
+        <h2 class="nx-h3">Assignment history</h2>
+        <ol class="mt-4">
+          @for (entry of a.history; track $index; let last = $last) {
+            <li class="flex gap-3">
+              <div class="flex flex-col items-center">
+                <span
+                  class="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-primary"
+                  aria-hidden="true"
+                ></span>
+                @if (!last) {
+                  <span class="my-1 w-0.5 flex-1 bg-border-subtle" aria-hidden="true"></span>
+                }
+              </div>
+              <div class="min-w-0 pb-5" [class.pb-0]="last">
+                <p class="nx-body font-medium">{{ entry.event }}</p>
+                <p class="nx-caption mt-0.5">
+                  {{ entry.date | date: 'd MMM y' }}
+                  @if (entry.personId) {
+                    · {{ personName(entry.personId) }}
+                  }
+                </p>
+              </div>
+            </li>
+          }
+        </ol>
+      </div>
+    }
+
+    @if (activeTab() === 'maintenance' || activeTab() === 'documents') {
+      <div
+        role="tabpanel"
+        [id]="'apanel-' + activeTab()"
+        [attr.aria-labelledby]="'atab-' + activeTab()"
+        class="mt-6 rounded-lg border border-dashed border-border-subtle bg-surface px-6 py-16 text-center"
+      >
+        <span
+          class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+          aria-hidden="true"
+        >
+          <nx-icon name="folder" [size]="24" />
+        </span>
+        <h2 class="nx-h3 mt-4">
+          {{ activeTab() === 'maintenance' ? 'No maintenance records' : 'No documents attached' }}
+        </h2>
+        <p class="nx-body mx-auto mt-1 max-w-md text-content-secondary">
+          {{
+            activeTab() === 'maintenance'
+              ? 'Repair tickets and service history will appear here once maintenance is tracked.'
+              : 'Invoices, warranty certificates and disposal records attach here via the Documents module.'
+          }}
+        </p>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="px-4 pb-10 pt-3 sm:px-6">
+    <div
+      class="flex flex-col items-center justify-center rounded-lg border border-border-subtle bg-surface px-6 py-20 text-center"
+    >
+      <span
+        class="flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+        aria-hidden="true"
+      >
+        <nx-icon name="laptop" [size]="24" />
+      </span>
+      <h1 class="nx-h2 mt-4">Asset not found</h1>
+      <p class="nx-body mt-1 max-w-sm text-content-secondary">No asset matches that identifier.</p>
+      <a
+        routerLink="/assets"
+        class="nx-button-text mt-5 inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="arrow-left" [size]="18" />
+        Back to assets
+      </a>
+    </div>
+  </div>
+}

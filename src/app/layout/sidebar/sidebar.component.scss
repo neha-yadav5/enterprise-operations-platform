@@ -1,0 +1,17 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+// routerLinkActive target. Written here rather than as a utility string on the
+// anchor because routerLinkActive takes a class name, not a utility list.
+:host ::ng-deep a.is-active {
+  background-color: rgb(var(--nx-color-primary) / 0.08);
+  color: rgb(var(--nx-color-primary-text));
+  font-weight: 500;
+}
+
+:host ::ng-deep a.is-active:hover {
+  background-color: rgb(var(--nx-color-primary) / 0.12);
+  color: rgb(var(--nx-color-primary-text));
+}

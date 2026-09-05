@@ -1,0 +1,207 @@
+// NexusOne design tokens — spec 6 (Design System).
+//
+// Colours are stored as space-separated RGB channels rather than hex so that
+// Tailwind can apply opacity modifiers to them, e.g. `bg-primary/10`. Read a
+// token in plain CSS with `rgb(var(--nx-color-primary))`.
+
+:root {
+  // ---- Colour ------------------------------------------------------------
+  --nx-color-primary: 37 99 235; // #2563EB
+  --nx-color-secondary: 14 165 233; // #0EA5E9
+  --nx-color-success: 22 163 74; // #16A34A
+  --nx-color-warning: 245 158 11; // #F59E0B
+  --nx-color-danger: 220 38 38; // #DC2626
+  --nx-color-background: 248 250 252; // #F8FAFC
+  --nx-color-surface: 255 255 255; // #FFFFFF
+  --nx-color-border: 229 231 235; // #E5E7EB
+  --nx-color-text: 17 24 39; // #111827
+  --nx-color-text-secondary: 107 114 128; // #6B7280
+
+  // ---- Text-safe colour variants -----------------------------------------
+  // The spec-6 brand colours are tuned for FILLS. As small text on Surface or
+  // Background several of them fail WCAG AA (measured against #FFFFFF):
+  //   secondary #0EA5E9 -> 2.77:1   success #16A34A -> 3.30:1
+  //   warning   #F59E0B -> 2.15:1   primary on its own 10% tint -> 4.49:1
+  // These darker steps are the same hues at >= 4.5:1, and are what any coloured
+  // TEXT must use. Keep the fill tokens above for backgrounds, bars and marks.
+  --nx-color-primary-text: 29 78 216; // #1D4ED8 — 6.70:1
+  --nx-color-secondary-text: 3 105 161; // #0369A1 — 5.93:1
+  --nx-color-success-text: 21 128 61; // #15803D — 5.02:1
+  --nx-color-warning-text: 180 83 9; // #B45309 — 5.02:1
+  --nx-color-danger-text: 185 28 28; // #B91C1C — 6.47:1
+
+  // ---- Typography --------------------------------------------------------
+  --nx-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  // ---- Spacing (spec 6: 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64) -------------
+  --nx-space-1: 4px;
+  --nx-space-2: 8px;
+  --nx-space-3: 12px;
+  --nx-space-4: 16px;
+  --nx-space-6: 24px;
+  --nx-space-8: 32px;
+  --nx-space-12: 48px;
+  --nx-space-16: 64px;
+
+  // ---- Radius (spec 6: 4 / 8 / 12 / 16) ----------------------------------
+  --nx-radius-sm: 4px;
+  --nx-radius-md: 8px;
+  --nx-radius-lg: 12px;
+  --nx-radius-xl: 16px;
+
+  // ---- Elevation (spec 6: small / medium / large) ------------------------
+  --nx-shadow-sm: 0 1px 2px 0 rgb(17 24 39 / 0.05);
+  --nx-shadow-md: 0 4px 6px -1px rgb(17 24 39 / 0.08), 0 2px 4px -2px rgb(17 24 39 / 0.06);
+  --nx-shadow-lg: 0 10px 15px -3px rgb(17 24 39 / 0.08), 0 4px 6px -4px rgb(17 24 39 / 0.05);
+}
+
+// Base layer. Tailwind's Preflight is disabled (see tailwind.config.js) because
+// its global resets fight Angular Material's component styles, so everything we
+// still depend on has to be declared explicitly here.
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+
+  // REQUIRED, not cosmetic. Tailwind's `border` utility emits only
+  // `border-width`; it relies on Preflight to supply `border-style: solid` and
+  // a default colour. Without these two lines every `border`/`divide-*`
+  // utility in the app computes to `border-style: none` and renders nothing.
+  border-width: 0;
+  border-style: solid;
+  border-color: rgb(var(--nx-color-border));
+}
+
+html,
+body {
+  height: 100%;
+}
+
+// REQUIRED. `app-root` is an unknown element, so it defaults to
+// `display: inline`. The shell's full-height block then sits inside an inline
+// box, the document grows past the viewport, and the whole page scrolls behind
+// a shell that is already managing its own scrolling — which reads as a large
+// dead area under the content.
+app-root {
+  display: block;
+  height: 100%;
+}
+
+// The shell owns scrolling: it pins the sidebar and topbar and scrolls <main>
+// internally. Nothing should ever scroll the document itself.
+body {
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  background-color: rgb(var(--nx-color-background));
+  color: rgb(var(--nx-color-text));
+  font-family: var(--nx-font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Also normally Preflight's job. Without this, the user-agent margins on
+// headings and paragraphs survive and fight the spacing scale, so a
+// `<h2 class="nx-h2">` sits on ~0.83em of margin nobody asked for.
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+figure,
+blockquote,
+dl,
+dd,
+pre {
+  margin: 0;
+}
+
+// Headings inherit their weight from the .nx-* type classes rather than the
+// user agent's bold default.
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+ol,
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Form controls inherit type instead of falling back to the UA's own font.
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 100%;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+// REQUIRED, not cosmetic. Without Preflight a <button> keeps the user agent's
+// `background-color: buttonface`, so any button without an explicit background
+// paints an opaque grey panel — which turns a full-screen click-away overlay
+// into a sheet that hides the entire page.
+button,
+[type='button'],
+[type='reset'],
+[type='submit'] {
+  -webkit-appearance: button;
+  background-color: transparent;
+  background-image: none;
+}
+
+button,
+[role='button'] {
+  cursor: pointer;
+}
+
+button:disabled,
+[role='button']:disabled {
+  cursor: default;
+}
+
+// Links are styled per-use; without this they arrive underlined and UA-blue.
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+// Keeps replaced elements from sitting on the text baseline and adding a gap.
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+  vertical-align: middle;
+}
+
+// Placeholder colour is set per-input with Tailwind, but the UA default is
+// too dark against our surfaces when no utility is applied.
+input::placeholder,
+textarea::placeholder {
+  opacity: 1;
+  color: rgb(var(--nx-color-text-secondary));
+}

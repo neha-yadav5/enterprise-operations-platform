@@ -1,0 +1,487 @@
+<div class="px-4 pb-10 pt-3 sm:px-6">
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <h1 class="nx-h1">Audit Logs</h1>
+      <p class="nx-body mt-1 max-w-2xl text-content-secondary">
+        Append-only record of who did what, to which record, and what changed. Events cannot be
+        edited or deleted.
+      </p>
+    </div>
+
+    <div class="flex shrink-0 items-center gap-2">
+      <button
+        type="button"
+        (click)="filtersOpen.set(!filtersOpen())"
+        [attr.aria-expanded]="filtersOpen()"
+        aria-controls="audit-filters"
+        class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg border px-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        [class]="
+          activeFilterCount() > 0
+            ? 'border-primary bg-primary/10 text-primary-text'
+            : 'border-border-subtle bg-surface text-content hover:bg-background'
+        "
+      >
+        <nx-icon name="filter" [size]="18" />
+        Filters
+        @if (activeFilterCount() > 0) {
+          <span class="rounded-full bg-primary px-1.5 text-[11px] font-semibold text-white">
+            {{ activeFilterCount() }}
+          </span>
+        }
+      </button>
+
+      <button
+        *hasPermission="'audit.export'"
+        type="button"
+        (click)="exportCsv()"
+        class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg border border-border-subtle bg-surface px-3 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="download" [size]="18" class="text-content-secondary" />
+        Export CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="mt-6 flex flex-wrap items-center gap-3">
+    <div class="relative min-w-0 flex-1 sm:max-w-md">
+      <label for="aud-search" class="sr-only">Search audit events</label>
+      <span
+        class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-content-secondary"
+        aria-hidden="true"
+      >
+        <nx-icon name="search" [size]="18" />
+      </span>
+      <input
+        id="aud-search"
+        type="search"
+        [value]="search()"
+        (input)="onSearch($event)"
+        placeholder="Event ID, action, entity or correlation ID…"
+        class="nx-body h-10 w-full rounded-lg border border-border-subtle bg-surface pl-10 pr-3 text-content placeholder:text-content-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+      />
+    </div>
+
+    @if (hasQuery()) {
+      <button
+        type="button"
+        (click)="reset()"
+        class="nx-button-text inline-flex h-10 items-center gap-1.5 rounded-lg px-2 text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="close" [size]="16" />
+        Reset
+      </button>
+    }
+
+    <p class="nx-caption ml-auto" aria-live="polite">
+      {{ total() }} of {{ grandTotal() }} events
+    </p>
+  </div>
+
+  <!-- Filter panel -->
+  @if (filtersOpen()) {
+    <div
+      id="audit-filters"
+      class="mt-4 grid gap-4 rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:grid-cols-2 xl:grid-cols-3"
+    >
+      <div>
+        <label for="aud-actor" class="nx-table-header block">Actor</label>
+        <select
+          id="aud-actor"
+          [value]="actorId()"
+          (change)="onFilter('actorId', $event)"
+          class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="">Any actor</option>
+          @for (id of actorIds(); track id) {
+            <option [value]="id">{{ actorLabel(id) }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="aud-action" class="nx-table-header block">Action</label>
+        <select
+          id="aud-action"
+          [value]="action()"
+          (change)="onFilter('action', $event)"
+          class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 font-mono text-[13px] text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="">Any action</option>
+          @for (item of actions(); track item) {
+            <option [value]="item">{{ item }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="aud-entity" class="nx-table-header block">Entity type</label>
+        <select
+          id="aud-entity"
+          [value]="entityType()"
+          (change)="onFilter('entityType', $event)"
+          class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="">Any entity</option>
+          @for (item of entityTypes; track item) {
+            <option [value]="item">{{ item }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="aud-module" class="nx-table-header block">Module</label>
+        <select
+          id="aud-module"
+          [value]="module()"
+          (change)="onFilter('module', $event)"
+          class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="">Any module</option>
+          @for (item of modules; track item) {
+            <option [value]="item">{{ item }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="aud-result" class="nx-table-header block">Result</label>
+        <select
+          id="aud-result"
+          [value]="result()"
+          (change)="onFilter('result', $event)"
+          class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="">Any result</option>
+          @for (item of results; track item) {
+            <option [value]="item">{{ item }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="aud-severity" class="nx-table-header block">Severity</label>
+        <select
+          id="aud-severity"
+          [value]="severity()"
+          (change)="onFilter('severity', $event)"
+          class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="">Any severity</option>
+          @for (item of severities; track item) {
+            <option [value]="item">{{ item }}</option>
+          }
+        </select>
+      </div>
+
+      <p class="nx-caption sm:col-span-2 xl:col-span-3">
+        Date-range filtering is not wired: the fixture set has no server to range-query against.
+        Every other filter is live.
+      </p>
+    </div>
+  }
+
+  <!-- Table -->
+  <div class="mt-4 overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-sm">
+    @if (rows().length > 0) {
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[1000px] border-collapse text-left">
+          <caption class="sr-only">
+            Audit events. Select a row to open its detail.
+          </caption>
+          <thead>
+            <tr class="border-b border-border-subtle bg-background">
+              <th scope="col" class="nx-table-header px-5 py-3">Timestamp</th>
+              <th scope="col" class="nx-table-header px-5 py-3">Actor</th>
+              <th scope="col" class="nx-table-header px-5 py-3">Action</th>
+              <th scope="col" class="nx-table-header px-5 py-3">Entity</th>
+              <th scope="col" class="nx-table-header px-5 py-3">Module</th>
+              <th scope="col" class="nx-table-header px-5 py-3">Severity</th>
+              <th scope="col" class="nx-table-header px-5 py-3">Result</th>
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-border-subtle">
+            @for (event of rows(); track event.id) {
+              <tr
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'Open audit event ' + event.id"
+                (click)="open(event, $event)"
+                (keydown.enter)="open(event, $event)"
+                (keydown.space)="open(event, $event)"
+                class="cursor-pointer transition-colors hover:bg-background focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-primary"
+                [class.bg-background]="selectedId() === event.id"
+              >
+                <td class="nx-body px-5 py-3 tabular-nums text-content-secondary">
+                  {{ event.timestamp.slice(0, 10) }}
+                  <span class="block">{{ event.timestamp.slice(11, 16) }}</span>
+                </td>
+                <td class="px-5 py-3">
+                  <span class="flex items-center gap-2.5">
+                    <nx-avatar [initials]="actorInitials(event)" [size]="28" />
+                    <span class="nx-body truncate">{{ actorName(event) }}</span>
+                  </span>
+                </td>
+                <td class="px-5 py-3">
+                  <span class="nx-caption font-mono font-medium text-content">
+                    {{ event.action }}
+                  </span>
+                </td>
+                <td class="px-5 py-3">
+                  <span class="nx-body block truncate">{{ event.entityName }}</span>
+                  <span class="nx-caption block font-mono">
+                    {{ event.entityType }} · {{ event.entityId }}
+                  </span>
+                </td>
+                <td class="nx-body px-5 py-3 text-content-secondary">{{ event.module }}</td>
+                <td class="px-5 py-3">
+                  <nx-status-badge
+                    [label]="event.severity"
+                    [tone]="severityTone(event.severity)"
+                  />
+                </td>
+                <td class="px-5 py-3">
+                  <nx-status-badge [label]="event.result" [tone]="resultTone(event.result)" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div
+        class="flex flex-wrap items-center justify-between gap-3 border-t border-border-subtle px-5 py-3"
+      >
+        <div class="flex items-center gap-2">
+          <label for="aud-size" class="nx-caption">Rows per page</label>
+          <select
+            id="aud-size"
+            [value]="size()"
+            (change)="onSize($event)"
+            class="nx-body h-9 rounded-lg border border-border-subtle bg-surface px-2 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option [value]="10">10</option>
+            <option [value]="25">25</option>
+            <option [value]="50">50</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <p class="nx-caption">Page {{ currentPage() }} of {{ pages() }}</p>
+          <button
+            type="button"
+            (click)="goto(currentPage() - 1)"
+            [disabled]="currentPage() <= 1"
+            class="flex h-9 w-9 items-center justify-center rounded-md border border-border-subtle text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Previous page"
+          >
+            <nx-icon name="chevron-left" [size]="18" />
+          </button>
+          <button
+            type="button"
+            (click)="goto(currentPage() + 1)"
+            [disabled]="currentPage() >= pages()"
+            class="flex h-9 w-9 items-center justify-center rounded-md border border-border-subtle text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Next page"
+          >
+            <nx-icon name="chevron-right" [size]="18" />
+          </button>
+        </div>
+      </div>
+    } @else {
+      <div class="flex flex-col items-center justify-center px-6 py-16 text-center">
+        <span
+          class="flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+          aria-hidden="true"
+        >
+          <nx-icon name="audit" [size]="24" />
+        </span>
+        <h2 class="nx-h3 mt-4">
+          {{ hasQuery() ? 'No audit events match your filters' : 'No audit events recorded yet' }}
+        </h2>
+        <p class="nx-body mt-1 max-w-sm text-content-secondary">
+          {{
+            hasQuery()
+              ? 'Try widening the filters, or reset them.'
+              : 'Events appear here as people act on records.'
+          }}
+        </p>
+        @if (hasQuery()) {
+          <button
+            type="button"
+            (click)="reset()"
+            class="nx-button-text mt-4 inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-3 transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            Reset filters
+          </button>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Detail drawer -->
+@if (selected(); as e) {
+  <div class="fixed inset-0 z-50" (keydown)="onDrawerKeydown($event)">
+    <button
+      type="button"
+      class="absolute inset-0 cursor-default bg-content/20"
+      (click)="close()"
+      tabindex="-1"
+      aria-hidden="true"
+    ></button>
+
+    <div
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'Audit event ' + e.id"
+      class="absolute right-0 top-0 flex h-full w-full max-w-lg flex-col border-l border-border-subtle bg-surface shadow-lg"
+    >
+      <div class="flex items-start justify-between gap-3 border-b border-border-subtle px-5 py-4">
+        <div class="min-w-0">
+          <h2 class="nx-h3">{{ e.action }}</h2>
+          <p class="nx-caption mt-0.5 font-mono">{{ e.id }}</p>
+        </div>
+        <button
+          #drawerClose
+          type="button"
+          (click)="close()"
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+          aria-label="Close audit event detail"
+        >
+          <nx-icon name="close" [size]="18" />
+        </button>
+      </div>
+
+      <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+        <!-- Summary -->
+        <section>
+          <h3 class="nx-table-header">Event</h3>
+          <dl class="mt-2 grid grid-cols-2 gap-x-4 gap-y-3">
+            <div>
+              <dt class="nx-caption">Timestamp</dt>
+              <dd class="nx-body mt-0.5 tabular-nums">
+                {{ e.timestamp.slice(0, 10) }} {{ e.timestamp.slice(11, 16) }}
+              </dd>
+            </div>
+            <div>
+              <dt class="nx-caption">Module</dt>
+              <dd class="nx-body mt-0.5">{{ e.module }}</dd>
+            </div>
+            <div>
+              <dt class="nx-caption">Result</dt>
+              <dd class="mt-0.5">
+                <nx-status-badge [label]="e.result" [tone]="resultTone(e.result)" />
+              </dd>
+            </div>
+            <div>
+              <dt class="nx-caption">Severity</dt>
+              <dd class="mt-0.5">
+                <nx-status-badge [label]="e.severity" [tone]="severityTone(e.severity)" />
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <!-- Actor -->
+        <section class="mt-6">
+          <h3 class="nx-table-header">Actor</h3>
+          <div class="mt-2 flex items-center gap-3">
+            <nx-avatar [initials]="actorInitials(e)" [size]="36" />
+            <div class="min-w-0">
+              <p class="nx-body truncate font-medium">{{ actorName(e) }}</p>
+              <p class="nx-caption font-mono">{{ e.actorId }}</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Entity -->
+        <section class="mt-6">
+          <h3 class="nx-table-header">Entity</h3>
+          <dl class="mt-2 space-y-2">
+            <div class="flex justify-between gap-4">
+              <dt class="nx-caption">Type</dt>
+              <dd class="nx-body font-mono">{{ e.entityType }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="nx-caption">ID</dt>
+              <dd class="nx-body font-mono">{{ e.entityId }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="nx-caption">Name</dt>
+              <dd class="nx-body min-w-0 truncate text-right">{{ e.entityName }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <!-- Change diff -->
+        <section class="mt-6">
+          <h3 class="nx-table-header">Changes</h3>
+
+          @if (e.changes.length > 0) {
+            <ul class="mt-2 space-y-3">
+              @for (change of e.changes; track change.field) {
+                <li class="rounded-lg border border-border-subtle bg-background/60 p-3">
+                  <p class="nx-body font-medium">{{ change.field }}</p>
+                  <div class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                    <span class="nx-caption">Before</span>
+                    <span class="nx-body font-mono text-danger-text">{{ change.before }}</span>
+                    <span class="nx-caption">After</span>
+                    <span class="nx-body font-mono text-success-text">{{ change.after }}</span>
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="nx-body mt-2 text-content-secondary">
+              This event recorded no field changes.
+            </p>
+          }
+        </section>
+
+        <!-- Technical -->
+        <section class="mt-6">
+          <h3 class="nx-table-header">Technical context</h3>
+          <dl class="mt-2 space-y-2">
+            <div class="flex justify-between gap-4">
+              <dt class="nx-caption">IP address</dt>
+              <dd class="nx-body font-mono">{{ e.ip }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="nx-caption">Correlation ID</dt>
+              <dd class="nx-body font-mono">{{ e.correlationId }}</dd>
+            </div>
+          </dl>
+          <p class="nx-caption mt-3">
+            Credentials, tokens and secrets are never recorded in audit payloads.
+          </p>
+        </section>
+      </div>
+
+      <!-- Drawer actions -->
+      <div class="flex flex-wrap items-center gap-2 border-t border-border-subtle px-5 py-4">
+        <button
+          type="button"
+          (click)="copyId(e.id)"
+          class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg border border-border-subtle bg-surface px-3 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <nx-icon [name]="copiedId() === e.id ? 'check' : 'document'" [size]="18" />
+          {{ copiedId() === e.id ? 'Copied' : 'Copy event ID' }}
+        </button>
+
+        @if (e.link) {
+          <a
+            [routerLink]="e.link"
+            (click)="close()"
+            class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            Open record
+            <nx-icon name="chevron-right" [size]="18" />
+          </a>
+        }
+      </div>
+    </div>
+  </div>
+}

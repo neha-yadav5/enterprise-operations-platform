@@ -1,0 +1,280 @@
+@if (workflow(); as w) {
+  <div class="px-4 pb-10 pt-3 sm:px-6">
+    <a
+      routerLink="/workflow"
+      class="nx-caption inline-flex items-center gap-1.5 rounded-md text-content-secondary transition-colors hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <nx-icon name="arrow-left" [size]="16" />
+      All workflows
+    </a>
+
+    <!-- Header -->
+    <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h1 class="nx-h1">{{ w.name }}</h1>
+          <nx-status-badge [label]="w.status" [tone]="toneFor(w.status)" />
+        </div>
+        <p class="nx-caption mt-1">
+          <span class="font-mono">{{ w.id }}</span> · {{ w.requestType }} · v{{ w.version }} ·
+          updated {{ w.updatedAt | date: 'd MMM y, HH:mm' }}
+        </p>
+      </div>
+
+      <div class="flex shrink-0 items-center gap-2">
+        @if (w.status !== 'Archived') {
+          <button
+            type="button"
+            (click)="archive()"
+            class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg border border-border-subtle bg-surface px-3 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            Archive
+          </button>
+        }
+        <button
+          *hasPermission="'workflows.publish'"
+          type="button"
+          (click)="publish()"
+          class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <nx-icon name="check" [size]="18" />
+          {{ w.status === 'Active' ? 'Publish new version' : 'Publish' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-6 grid gap-4 lg:grid-cols-3">
+      <!-- Canvas -->
+      <section class="rounded-lg border border-border-subtle bg-background/40 p-5 lg:col-span-2">
+        <h2 class="nx-h3">Steps</h2>
+        <p class="nx-caption mt-1">
+          Select a step to configure it. Order is top to bottom — reorder with the arrow controls.
+        </p>
+
+        <ol class="mt-5">
+          <!-- Implicit start -->
+          <li class="flex flex-col items-center">
+            <span
+              class="nx-caption rounded-full border border-border-subtle bg-surface px-3 py-1 font-medium"
+            >
+              Request submitted
+            </span>
+            <span class="my-2 h-5 w-0.5 bg-border-subtle" aria-hidden="true"></span>
+          </li>
+
+          @for (step of w.steps; track step.id; let last = $last) {
+            <li class="flex flex-col items-center">
+              <div
+                class="w-full rounded-lg border-2 bg-surface p-4 shadow-sm transition-colors"
+                [class]="
+                  selected()?.id === step.id
+                    ? 'border-primary'
+                    : 'border-border-subtle hover:border-primary/40'
+                "
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <button
+                    type="button"
+                    (click)="select(step.id)"
+                    class="flex min-w-0 flex-1 items-start gap-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    [attr.aria-pressed]="selected()?.id === step.id"
+                  >
+                    <span
+                      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary-text"
+                      aria-hidden="true"
+                    >
+                      <nx-icon [name]="iconFor(step.type)" [size]="16" />
+                    </span>
+
+                    <span class="min-w-0">
+                      <span class="nx-body block truncate font-medium">{{ step.name }}</span>
+                      <span class="nx-caption block truncate">
+                        {{ step.type }} · {{ step.approverRole }} · SLA {{ step.slaHours }}h
+                        @if (step.escalateAfterHours) {
+                          · escalates {{ step.escalateAfterHours }}h
+                        }
+                      </span>
+                    </span>
+                  </button>
+
+                  <div class="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      (click)="move(step.id, -1)"
+                      [disabled]="isFirst(step.id)"
+                      class="flex h-8 w-8 items-center justify-center rounded-md text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-30"
+                      [attr.aria-label]="'Move ' + step.name + ' earlier'"
+                    >
+                      <nx-icon name="arrow-up" [size]="16" />
+                    </button>
+                    <button
+                      type="button"
+                      (click)="move(step.id, 1)"
+                      [disabled]="isLast(step.id)"
+                      class="flex h-8 w-8 items-center justify-center rounded-md text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-30"
+                      [attr.aria-label]="'Move ' + step.name + ' later'"
+                    >
+                      <nx-icon name="arrow-down" [size]="16" />
+                    </button>
+                    <button
+                      type="button"
+                      (click)="remove(step.id)"
+                      class="flex h-8 w-8 items-center justify-center rounded-md text-content-secondary transition-colors hover:bg-danger/10 hover:text-danger-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                      [attr.aria-label]="'Delete ' + step.name"
+                    >
+                      <nx-icon name="trash" [size]="16" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <span class="my-2 h-5 w-0.5 bg-border-subtle" aria-hidden="true"></span>
+
+              @if (last) {
+                <button
+                  type="button"
+                  (click)="addStep()"
+                  class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg border border-dashed border-border-subtle bg-surface px-4 text-content-secondary transition-colors hover:border-primary/50 hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  <nx-icon name="plus" [size]="16" />
+                  Add step
+                </button>
+                <span class="my-2 h-5 w-0.5 bg-border-subtle" aria-hidden="true"></span>
+              }
+            </li>
+          } @empty {
+            <li class="flex flex-col items-center">
+              <button
+                type="button"
+                (click)="addStep()"
+                class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg border border-dashed border-border-subtle bg-surface px-4 text-content-secondary transition-colors hover:border-primary/50 hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                <nx-icon name="plus" [size]="16" />
+                Add the first step
+              </button>
+              <span class="my-2 h-5 w-0.5 bg-border-subtle" aria-hidden="true"></span>
+            </li>
+          }
+
+          <!-- Implicit end -->
+          <li class="flex flex-col items-center">
+            <span
+              class="nx-caption rounded-full border border-success/30 bg-success/10 px-3 py-1 font-medium text-success-text"
+            >
+              Request approved
+            </span>
+          </li>
+        </ol>
+      </section>
+
+      <!-- Config panel -->
+      <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+        <h2 class="nx-h3">Step configuration</h2>
+
+        @if (selected(); as step) {
+          <p class="nx-caption mt-1">Editing “{{ step.name }}”. Changes apply immediately.</p>
+
+          <div class="mt-5 space-y-5">
+            <div>
+              <label for="wfb-name" class="nx-table-header block">Step name</label>
+              <input
+                id="wfb-name"
+                type="text"
+                [value]="step.name"
+                (input)="onName($event)"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            <div>
+              <label for="wfb-type" class="nx-table-header block">Type</label>
+              <select
+                id="wfb-type"
+                [value]="step.type"
+                (change)="onType($event)"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                @for (item of stepTypes; track item) {
+                  <option [value]="item">{{ item }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label for="wfb-role" class="nx-table-header block">Approver</label>
+              <select
+                id="wfb-role"
+                [value]="step.approverRole"
+                (change)="onRole($event)"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                @for (item of approverRoles; track item) {
+                  <option [value]="item">{{ item }}</option>
+                }
+              </select>
+              <p class="nx-caption mt-1">
+                Routed by role, so the chain survives people changing jobs.
+              </p>
+            </div>
+
+            <div>
+              <label for="wfb-sla" class="nx-table-header block">SLA (hours)</label>
+              <input
+                id="wfb-sla"
+                type="number"
+                min="1"
+                [value]="step.slaHours"
+                (input)="onSla($event)"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 tabular-nums text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            <div>
+              <label for="wfb-escalation" class="nx-table-header block">
+                Escalate after (hours)
+              </label>
+              <input
+                id="wfb-escalation"
+                type="number"
+                min="1"
+                [value]="step.escalateAfterHours ?? ''"
+                (input)="onEscalation($event)"
+                placeholder="No escalation"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 tabular-nums text-content placeholder:text-content-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+              <p class="nx-caption mt-1">Leave blank for no escalation.</p>
+            </div>
+          </div>
+        } @else {
+          <p class="nx-body mt-3 text-content-secondary">
+            This workflow has no steps. Add one to configure it.
+          </p>
+        }
+      </section>
+    </div>
+  </div>
+} @else {
+  <div class="px-4 pb-10 pt-3 sm:px-6">
+    <div
+      class="flex flex-col items-center justify-center rounded-lg border border-border-subtle bg-surface px-6 py-20 text-center"
+    >
+      <span
+        class="flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+        aria-hidden="true"
+      >
+        <nx-icon name="workflow" [size]="24" />
+      </span>
+      <h1 class="nx-h2 mt-4">Workflow not found</h1>
+      <p class="nx-body mt-1 max-w-sm text-content-secondary">
+        No workflow matches that identifier.
+      </p>
+      <a
+        routerLink="/workflow"
+        class="nx-button-text mt-5 inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <nx-icon name="arrow-left" [size]="18" />
+        Back to workflows
+      </a>
+    </div>
+  </div>
+}

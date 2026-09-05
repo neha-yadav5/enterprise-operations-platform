@@ -1,0 +1,202 @@
+<div class="min-h-full bg-background pb-16">
+  <header class="border-b border-border-subtle bg-surface">
+    <div class="mx-auto max-w-[1200px] px-6 py-10 sm:px-8">
+      <p class="nx-table-header">{{ orgName() }} · Design System</p>
+      <h1 class="nx-display mt-2">Design tokens</h1>
+      <p class="nx-body mt-3 max-w-2xl text-content-secondary">
+        Every value on this page is resolved from a CSS custom property in
+        <code class="rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[13px] text-primary-text">
+          src/styles/_tokens.scss
+        </code>
+        — nothing is hard-coded except the hex captions, so any drift between a
+        caption and its swatch is visible at a glance.
+      </p>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-[1200px] space-y-14 px-6 py-12 sm:px-8">
+    <!-- Colour -->
+    <section>
+      <h2 class="nx-h2">Colour</h2>
+      <p class="nx-caption mt-1">Spec §6 — brand and status</p>
+      <div class="mt-5 grid grid-cols-2 gap-4 md:grid-cols-5">
+        @for (s of brandSwatches; track s.token) {
+          <div class="overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-sm">
+            <div class="h-20 w-full" [style.background]="colorOf(s.token)"></div>
+            <div class="px-4 py-3">
+              <p class="nx-h3">{{ s.name }}</p>
+              <p class="nx-caption mt-1 font-mono">{{ s.hex }}</p>
+            </div>
+          </div>
+        }
+      </div>
+
+      <p class="nx-caption mt-8">Spec §6 — surface and text</p>
+      <div class="mt-3 grid grid-cols-2 gap-4 md:grid-cols-5">
+        @for (s of surfaceSwatches; track s.token) {
+          <div class="overflow-hidden rounded-lg border border-border-subtle bg-surface shadow-sm">
+            <div
+              class="h-20 w-full border-b border-border-subtle"
+              [style.background]="colorOf(s.token)"
+            ></div>
+            <div class="px-4 py-3">
+              <p class="nx-h3">{{ s.name }}</p>
+              <p class="nx-caption mt-1 font-mono">{{ s.hex }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Typography -->
+    <section>
+      <h2 class="nx-h2">Typography</h2>
+      <p class="nx-caption mt-1">Spec §6 — Inter, eight named styles</p>
+      <div class="mt-5 divide-y divide-border-subtle rounded-lg border border-border-subtle bg-surface">
+        @for (t of typeStyles; track t.className) {
+          <div class="flex flex-wrap items-baseline justify-between gap-4 px-5 py-4">
+            <span [class]="t.className">{{ t.name }} — Operational health at a glance</span>
+            <span class="nx-caption shrink-0 font-mono">{{ t.meta }}</span>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Spacing -->
+    <section>
+      <h2 class="nx-h2">Spacing</h2>
+      <p class="nx-caption mt-1">Spec §6 — 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64</p>
+      <div class="mt-5 space-y-3 rounded-lg border border-border-subtle bg-surface p-6">
+        @for (s of spacing; track s.token) {
+          <div class="flex items-center gap-4">
+            <span class="nx-caption w-6 shrink-0 font-mono">{{ s.name }}</span>
+            <span class="h-3 rounded-sm bg-primary" [style.width]="varOf(s.token)"></span>
+            <span class="nx-caption font-mono">{{ s.value }}</span>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Radius + Elevation -->
+    <section class="grid gap-10 lg:grid-cols-2">
+      <div>
+        <h2 class="nx-h2">Radius</h2>
+        <p class="nx-caption mt-1">Spec §6 — 4 / 8 / 12 / 16</p>
+        <div class="mt-5 flex flex-wrap gap-6 rounded-lg border border-border-subtle bg-surface p-6">
+          @for (r of radii; track r.token) {
+            <div class="flex flex-col items-center gap-2">
+              <div
+                class="h-20 w-20 border-2 border-primary bg-primary/10"
+                [style.borderRadius]="varOf(r.token)"
+              ></div>
+              <p class="nx-caption font-mono">{{ r.name }} · {{ r.value }}</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div>
+        <h2 class="nx-h2">Elevation</h2>
+        <p class="nx-caption mt-1">Spec §6 — small / medium / large</p>
+        <div class="mt-5 grid gap-5 sm:grid-cols-3">
+          @for (e of elevations; track e.token) {
+            <div class="rounded-lg bg-surface p-5" [style.boxShadow]="varOf(e.token)">
+              <p class="nx-h3">{{ e.name }}</p>
+              <p class="nx-caption mt-1 font-mono">{{ e.value }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Angular Material, themed -->
+    <section>
+      <h2 class="nx-h2">Angular Material</h2>
+      <p class="nx-caption mt-1">
+        Spec §7 — components rendered through the M3 theme generated from the spec palette
+      </p>
+
+      <div class="mt-5 space-y-8 rounded-lg border border-border-subtle bg-surface p-6">
+        <div>
+          <p class="nx-table-header">Buttons</p>
+          <div class="mt-3 flex flex-wrap items-center gap-3">
+            <button mat-flat-button>Primary</button>
+            <button mat-flat-button class="nx-button-secondary">Secondary</button>
+            <button mat-stroked-button>Outline</button>
+            <button mat-button>Ghost</button>
+            <button mat-flat-button class="nx-button-danger">Danger</button>
+          </div>
+        </div>
+
+        <div>
+          <p class="nx-table-header">Inputs</p>
+          <div class="mt-3 flex flex-wrap items-center gap-6">
+            <mat-form-field appearance="outline" class="w-full max-w-xs">
+              <mat-label>Search employees</mat-label>
+              <input matInput placeholder="Name, email or ID" />
+            </mat-form-field>
+            <mat-checkbox checked>Include archived</mat-checkbox>
+            <mat-slide-toggle checked>Email notifications</mat-slide-toggle>
+          </div>
+        </div>
+
+        <div>
+          <p class="nx-table-header">Chips &amp; progress</p>
+          <div class="mt-3 space-y-4">
+            <mat-chip-set>
+              <mat-chip>Engineering</mat-chip>
+              <mat-chip>Finance</mat-chip>
+              <mat-chip>People Ops</mat-chip>
+            </mat-chip-set>
+            <mat-progress-bar mode="determinate" [value]="68" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tokens composed -->
+    <section>
+      <h2 class="nx-h2">Tokens in composition</h2>
+      <p class="nx-caption mt-1">
+        A KPI row built only from the tokens above — the pattern the dashboard will reuse
+      </p>
+      <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+          <p class="nx-table-header">Total employees</p>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="nx-h1">1,284</span>
+            <span class="nx-caption font-medium text-success-text">↗ +3.2%</span>
+          </div>
+          <p class="nx-caption mt-1">vs last quarter</p>
+        </div>
+
+        <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+          <p class="nx-table-header">Active projects</p>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="nx-h1">47</span>
+            <span class="nx-caption font-medium text-success-text">↗ +6</span>
+          </div>
+          <p class="nx-caption mt-1">8 at risk</p>
+        </div>
+
+        <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+          <p class="nx-table-header">Pending approvals</p>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="nx-h1">23</span>
+            <span class="nx-caption font-medium text-secondary-text">↘ −11%</span>
+          </div>
+          <p class="nx-caption mt-1">avg 1.4 days</p>
+        </div>
+
+        <div class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+          <p class="nx-table-header">Asset utilisation</p>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="nx-h1">92%</span>
+            <span class="nx-caption font-medium text-success-text">↗ +1.8%</span>
+          </div>
+          <p class="nx-caption mt-1">3,410 assets</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>

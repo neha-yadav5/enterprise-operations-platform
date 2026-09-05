@@ -1,0 +1,805 @@
+@if (employee(); as me) {
+  <div class="px-4 pb-10 pt-3 sm:px-6">
+    <!-- Header -->
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="flex min-w-0 items-center gap-4">
+        <nx-avatar [initials]="avatarInitials()" [size]="64" />
+
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 class="nx-h1">{{ displayName() }}</h1>
+            <nx-status-badge [label]="me.status" [tone]="employeeTone(me.status)" />
+          </div>
+          <p class="nx-body mt-1 text-content-secondary">{{ me.title }}</p>
+          <p class="nx-caption mt-0.5">
+            {{ me.department }} · <span class="font-mono">{{ me.id }}</span>
+          </p>
+        </div>
+      </div>
+
+      @if (!editing()) {
+        <button
+          type="button"
+          (click)="startEdit()"
+          class="nx-button-text inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-3 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <nx-icon name="edit" [size]="18" />
+          Edit profile
+        </button>
+      }
+    </div>
+
+    <!-- Tabs -->
+    <div class="mt-6 border-b border-border-subtle">
+      <div role="tablist" aria-label="Profile sections" class="-mb-px flex gap-1 overflow-x-auto">
+        @for (tab of tabs; track tab.id) {
+          <button
+            type="button"
+            role="tab"
+            [id]="'ptab-' + tab.id"
+            [attr.aria-selected]="activeTab() === tab.id"
+            [attr.aria-controls]="'ppanel-' + tab.id"
+            [attr.tabindex]="activeTab() === tab.id ? 0 : -1"
+            (click)="activeTab.set(tab.id)"
+            class="nx-button-text shrink-0 border-b-2 px-3 py-2.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            [class]="
+              activeTab() === tab.id
+                ? 'border-primary text-primary-text'
+                : 'border-transparent text-content-secondary hover:border-border-subtle hover:text-content'
+            "
+          >
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- ================= Overview ================= -->
+    @if (activeTab() === 'overview') {
+      <div role="tabpanel" id="ppanel-overview" aria-labelledby="ptab-overview" class="mt-6">
+        <div class="grid gap-4 lg:grid-cols-2">
+          <!-- Personal information -->
+          <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h2 class="nx-h3">Personal information</h2>
+                <p class="nx-caption mt-1">You can change these yourself.</p>
+              </div>
+              <span
+                class="nx-caption rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary-text"
+              >
+                Editable
+              </span>
+            </div>
+
+            @if (editing()) {
+              <form [formGroup]="form" (ngSubmit)="save()" novalidate class="mt-4 space-y-4">
+                <div>
+                  <label for="pf-preferredName" class="nx-table-header block">Preferred name</label>
+                  <input
+                    id="pf-preferredName"
+                    formControlName="preferredName"
+                    type="text"
+                    [attr.aria-invalid]="invalid('preferredName')"
+                    class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+                    [class]="invalid('preferredName') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+                  />
+                  @if (invalid('preferredName')) {
+                    <p class="nx-caption mt-1 text-danger-text">This field is required.</p>
+                  }
+                </div>
+
+                <div>
+                  <label for="pf-phone" class="nx-table-header block">Phone number</label>
+                  <input
+                    id="pf-phone"
+                    formControlName="phone"
+                    type="tel"
+                    [attr.aria-invalid]="invalid('phone')"
+                    class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+                    [class]="invalid('phone') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+                  />
+                  @if (invalid('phone')) {
+                    <p class="nx-caption mt-1 text-danger-text">This field is required.</p>
+                  }
+                </div>
+
+                <div>
+                  <label for="pf-location" class="nx-table-header block">Location</label>
+                  <select
+                    id="pf-location"
+                    formControlName="location"
+                    class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    @for (item of locations; track item) {
+                      <option [value]="item">{{ item }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="flex flex-wrap justify-end gap-3 pt-1">
+                  <button
+                    type="button"
+                    (click)="cancelEdit()"
+                    class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  >
+                    <nx-icon name="check" [size]="18" />
+                    Save changes
+                  </button>
+                </div>
+              </form>
+            } @else {
+              <dl class="mt-4 space-y-3">
+                <div class="flex justify-between gap-4">
+                  <dt class="nx-caption">Preferred name</dt>
+                  <dd class="nx-body">{{ editable().preferredName }}</dd>
+                </div>
+                <div class="flex justify-between gap-4">
+                  <dt class="nx-caption">Work email</dt>
+                  <dd class="nx-body min-w-0 truncate">{{ me.email }}</dd>
+                </div>
+                <div class="flex justify-between gap-4">
+                  <dt class="nx-caption">Phone</dt>
+                  <dd class="nx-body">{{ editable().phone }}</dd>
+                </div>
+                <div class="flex justify-between gap-4">
+                  <dt class="nx-caption">Location</dt>
+                  <dd class="nx-body">{{ editable().location }}</dd>
+                </div>
+                <div class="flex justify-between gap-4">
+                  <dt class="nx-caption">Employee ID</dt>
+                  <dd class="nx-body font-mono">{{ me.id }}</dd>
+                </div>
+              </dl>
+            }
+          </section>
+
+          <!-- Employment information -->
+          <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h2 class="nx-h3">Employment</h2>
+                <p class="nx-caption mt-1">Held by your organisation.</p>
+              </div>
+              <span class="nx-caption rounded-full bg-background px-2 py-0.5 font-medium">
+                Read only
+              </span>
+            </div>
+
+            <dl class="mt-4 space-y-3">
+              <div class="flex justify-between gap-4">
+                <dt class="nx-caption">Job title</dt>
+                <dd class="nx-body">{{ me.title }}</dd>
+              </div>
+              <div class="flex justify-between gap-4">
+                <dt class="nx-caption">Department</dt>
+                <dd class="nx-body">{{ me.department }}</dd>
+              </div>
+              <div class="flex justify-between gap-4">
+                <dt class="nx-caption">Manager</dt>
+                <dd class="nx-body">
+                  @if (manager(); as boss) {
+                    <a
+                      [routerLink]="['/employees', boss.id]"
+                      class="text-primary-text underline-offset-2 hover:underline"
+                    >
+                      {{ name(boss) }}
+                    </a>
+                  } @else {
+                    <span class="text-content-secondary">—</span>
+                  }
+                </dd>
+              </div>
+              <div class="flex justify-between gap-4">
+                <dt class="nx-caption">Joined</dt>
+                <dd class="nx-body">{{ me.startDate | date: 'd MMMM y' }}</dd>
+              </div>
+              <div class="flex justify-between gap-4">
+                <dt class="nx-caption">Employment type</dt>
+                <dd class="nx-body">{{ me.employmentType }}</dd>
+              </div>
+              <div class="flex justify-between gap-4">
+                <dt class="nx-caption">Team</dt>
+                <dd class="nx-body">
+                  {{ team().length }} direct {{ team().length === 1 ? 'report' : 'reports' }}
+                </dd>
+              </div>
+            </dl>
+
+            <p class="nx-caption mt-4">
+              These come from your employment record. To change one, raise a request with People Ops.
+            </p>
+          </section>
+        </div>
+
+        <!-- Activity -->
+        <section class="mt-4 rounded-lg border border-border-subtle bg-surface shadow-sm">
+          <div class="border-b border-border-subtle px-5 py-4">
+            <h2 class="nx-h3">My activity</h2>
+            <p class="nx-caption mt-1">
+              What you have done recently. For the compliance trail, see
+              <a routerLink="/audit-logs" class="text-primary-text underline-offset-2 hover:underline">
+                Audit Logs</a
+              >.
+            </p>
+          </div>
+
+          <ul class="divide-y divide-border-subtle">
+            @for (entry of activity; track entry.target) {
+              <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-3.5">
+                <span class="nx-body min-w-0 flex-1">
+                  <span class="font-medium">{{ entry.action }}</span>
+                  <span class="text-content-secondary"> — </span>
+                  @if (entry.link) {
+                    <a
+                      [routerLink]="entry.link"
+                      class="text-primary-text underline-offset-2 hover:underline"
+                    >
+                      {{ entry.target }}
+                    </a>
+                  } @else {
+                    <span>{{ entry.target }}</span>
+                  }
+                </span>
+                <span class="nx-caption shrink-0">{{ entry.when }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+    }
+
+    <!-- ================= My work ================= -->
+    @if (activeTab() === 'work') {
+      <div
+        role="tabpanel"
+        id="ppanel-work"
+        aria-labelledby="ptab-work"
+        class="mt-6 grid gap-4 lg:grid-cols-2"
+      >
+        <!-- Projects -->
+        <section class="rounded-lg border border-border-subtle bg-surface shadow-sm">
+          <div class="flex items-center justify-between border-b border-border-subtle px-5 py-4">
+            <h2 class="nx-h3">My projects</h2>
+            <a routerLink="/projects" class="nx-caption text-primary-text hover:underline">All</a>
+          </div>
+
+          <ul class="divide-y divide-border-subtle">
+            @for (project of myProjects(); track project.id) {
+              <li class="px-5 py-3.5">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                  <a
+                    [routerLink]="['/projects', project.id]"
+                    class="nx-body min-w-0 truncate font-medium text-content hover:text-primary-text"
+                  >
+                    {{ project.name }}
+                  </a>
+                  <nx-status-badge
+                    [label]="project.status"
+                    [tone]="projectTone(project.status)"
+                    class="shrink-0"
+                  />
+                </div>
+                <p class="nx-caption mt-1">
+                  {{ project.leadId === 'EMP-1001' ? 'Project lead' : 'Team member' }} · due
+                  {{ project.dueDate | date: 'd MMM y' }}
+                </p>
+                <div class="mt-2">
+                  <nx-progress-bar
+                    [value]="project.progress"
+                    [label]="project.name + ' progress'"
+                  />
+                </div>
+              </li>
+            } @empty {
+              <li class="px-5 py-10 text-center">
+                <p class="nx-body text-content-secondary">No projects assigned yet.</p>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <!-- Requests -->
+        <section class="rounded-lg border border-border-subtle bg-surface shadow-sm">
+          <div class="flex items-center justify-between border-b border-border-subtle px-5 py-4">
+            <h2 class="nx-h3">My requests</h2>
+            <a routerLink="/requests" class="nx-caption text-primary-text hover:underline">All</a>
+          </div>
+
+          <ul class="divide-y divide-border-subtle">
+            @for (request of myRequests(); track request.id) {
+              <li class="px-5 py-3.5">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                  <a
+                    [routerLink]="['/requests', request.id]"
+                    class="nx-body min-w-0 truncate font-medium text-content hover:text-primary-text"
+                  >
+                    {{ request.title }}
+                  </a>
+                  <nx-status-badge
+                    [label]="request.state"
+                    [tone]="requestTone(request.state)"
+                    class="shrink-0"
+                  />
+                </div>
+                <p class="nx-caption mt-1">
+                  <span class="font-mono">{{ request.id }}</span> · {{ request.type }} · stage:
+                  {{ currentStage(request.id) }}
+                </p>
+              </li>
+            } @empty {
+              <li class="px-5 py-10 text-center">
+                <p class="nx-body text-content-secondary">You have no active requests.</p>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <!-- Documents -->
+        <section class="rounded-lg border border-border-subtle bg-surface shadow-sm">
+          <div class="flex items-center justify-between border-b border-border-subtle px-5 py-4">
+            <h2 class="nx-h3">My documents</h2>
+            <a routerLink="/documents" class="nx-caption text-primary-text hover:underline">All</a>
+          </div>
+
+          <ul class="divide-y divide-border-subtle">
+            @for (document of myDocuments(); track document.id) {
+              <li class="flex items-center gap-3 px-5 py-3.5">
+                <span
+                  class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background text-content-secondary"
+                  aria-hidden="true"
+                >
+                  <nx-icon name="document" [size]="18" />
+                </span>
+                <span class="min-w-0 flex-1">
+                  <a
+                    [routerLink]="['/documents', document.id]"
+                    class="nx-body block truncate font-medium text-content hover:text-primary-text"
+                  >
+                    {{ document.name }}
+                  </a>
+                  <span class="nx-caption block">
+                    {{ document.folder }} · updated {{ document.updatedAt | date: 'd MMM y' }}
+                  </span>
+                </span>
+              </li>
+            } @empty {
+              <li class="px-5 py-10 text-center">
+                <p class="nx-body text-content-secondary">No documents to display.</p>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <!-- Assets -->
+        <section class="rounded-lg border border-border-subtle bg-surface shadow-sm">
+          <div class="flex items-center justify-between border-b border-border-subtle px-5 py-4">
+            <h2 class="nx-h3">My assets</h2>
+            <a routerLink="/assets" class="nx-caption text-primary-text hover:underline">All</a>
+          </div>
+
+          <ul class="divide-y divide-border-subtle">
+            @for (asset of myAssets(); track asset.id) {
+              <li class="px-5 py-3.5">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                  <a
+                    [routerLink]="['/assets', asset.id]"
+                    class="nx-body min-w-0 truncate font-medium text-content hover:text-primary-text"
+                  >
+                    {{ asset.name }}
+                  </a>
+                  <nx-status-badge
+                    [label]="asset.status"
+                    [tone]="assetTone(asset.status)"
+                    class="shrink-0"
+                  />
+                </div>
+                <p class="nx-caption mt-1">
+                  <span class="font-mono">{{ asset.id }}</span> · {{ asset.category }} · warranty to
+                  {{ asset.warrantyEnd | date: 'MMM y' }}
+                </p>
+              </li>
+            } @empty {
+              <li class="px-5 py-10 text-center">
+                <p class="nx-body text-content-secondary">No assets assigned to you.</p>
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+    }
+
+    <!-- ================= Preferences ================= -->
+    @if (activeTab() === 'preferences') {
+      <div
+        role="tabpanel"
+        id="ppanel-preferences"
+        aria-labelledby="ptab-preferences"
+        class="mt-6 max-w-3xl space-y-4"
+      >
+        <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+          <h2 class="nx-h3">Notifications</h2>
+          <p class="nx-caption mt-1">These apply to your account only.</p>
+
+          <div class="mt-4 space-y-4">
+            @for (row of [
+              { key: 'emailNotifications', label: 'Email notifications', hint: 'Digest and direct emails.' },
+              { key: 'inAppNotifications', label: 'In-app notifications', hint: 'The bell in the top bar.' },
+              { key: 'requestUpdates', label: 'Request updates', hint: 'Approvals and changes on your requests.' },
+              { key: 'projectUpdates', label: 'Project updates', hint: 'Status and milestone changes.' },
+              { key: 'mentionNotifications', label: 'Mentions', hint: 'When somebody names you in a discussion.' }
+            ]; track row.key) {
+              <div class="flex items-start gap-3">
+                <button
+                  type="button"
+                  role="switch"
+                  [attr.aria-checked]="$any(preferences())[row.key]"
+                  (click)="togglePreference($any(row.key))"
+                  class="mt-0.5 flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  [class]="$any(preferences())[row.key] ? 'bg-primary' : 'bg-border-subtle'"
+                >
+                  <span
+                    class="h-5 w-5 rounded-full bg-surface shadow-sm transition-transform"
+                    [class]="$any(preferences())[row.key] ? 'translate-x-5' : 'translate-x-0'"
+                  ></span>
+                </button>
+                <span>
+                  <span class="nx-body block font-medium">{{ row.label }}</span>
+                  <span class="nx-caption block">{{ row.hint }}</span>
+                </span>
+              </div>
+            }
+          </div>
+        </section>
+
+        <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+          <h2 class="nx-h3">Appearance</h2>
+
+          <div class="mt-4 flex flex-wrap gap-2" role="group" aria-label="Appearance">
+            @for (item of appearances; track item) {
+              <button
+                type="button"
+                (click)="setAppearance(item)"
+                [attr.aria-pressed]="preferences().appearance === item"
+                class="nx-button-text inline-flex h-10 items-center rounded-lg border px-4 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                [class]="
+                  preferences().appearance === item
+                    ? 'border-primary bg-primary/10 text-primary-text'
+                    : 'border-border-subtle bg-surface text-content-secondary hover:bg-background hover:text-content'
+                "
+              >
+                {{ item }}
+              </button>
+            }
+          </div>
+
+          <p class="nx-caption mt-3">
+            Dark mode is stored but not yet applied — the design system ships a light palette only.
+          </p>
+        </section>
+
+        <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+          <h2 class="nx-h3">Language &amp; time</h2>
+
+          <div class="mt-4 grid gap-5 sm:grid-cols-2">
+            <div>
+              <label for="pf-language" class="nx-table-header block">Language</label>
+              <select
+                id="pf-language"
+                [value]="preferences().language"
+                (change)="onLanguage($event)"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                @for (item of languages; track item) {
+                  <option [value]="item">{{ item }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label for="pf-timezone" class="nx-table-header block">Time zone</label>
+              <select
+                id="pf-timezone"
+                [value]="preferences().timezone"
+                (change)="onTimezone($event)"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border border-border-subtle bg-surface px-3 text-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                @for (item of timezones; track item) {
+                  <option [value]="item">{{ item }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <p class="nx-caption mt-3">
+            Your time zone overrides the organisation default set in
+            <a routerLink="/settings" class="text-primary-text underline-offset-2 hover:underline">
+              Settings</a
+            >.
+          </p>
+        </section>
+      </div>
+    }
+
+    <!-- ================= Security ================= -->
+    @if (activeTab() === 'security') {
+      <div
+        role="tabpanel"
+        id="ppanel-security"
+        aria-labelledby="ptab-security"
+        class="mt-6 max-w-3xl space-y-4"
+      >
+        <section class="rounded-lg border border-border-subtle bg-surface p-5 shadow-sm sm:p-6">
+          <h2 class="nx-h3">Sign-in</h2>
+
+          <div class="mt-4 space-y-3">
+            <div
+              class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-subtle px-4 py-3"
+            >
+              <span class="flex items-center gap-3">
+                <span class="text-content-secondary" aria-hidden="true">
+                  <nx-icon name="key" [size]="18" />
+                </span>
+                <span>
+                  <span class="nx-body block font-medium">Password</span>
+                  <span class="nx-caption block">Last changed 4 months ago</span>
+                </span>
+              </span>
+              <button
+                type="button"
+                (click)="openPasswordDialog()"
+                class="nx-button-text inline-flex h-9 items-center rounded-md border border-border-subtle bg-surface px-3 transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                Change password
+              </button>
+            </div>
+
+            <div
+              class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-subtle px-4 py-3"
+            >
+              <span class="flex items-center gap-3">
+                <span class="text-content-secondary" aria-hidden="true">
+                  <nx-icon name="shield" [size]="18" />
+                </span>
+                <span>
+                  <span class="nx-body block font-medium">Multi-factor authentication</span>
+                  <span class="nx-caption block">
+                    Not enrolled · blocked on the identity provider upgrade (PRJ-221)
+                  </span>
+                </span>
+              </span>
+              <button
+                type="button"
+                disabled
+                title="Enrolment needs the identity provider, which is not connected yet"
+                class="nx-button-text inline-flex h-9 cursor-not-allowed items-center rounded-md border border-border-subtle bg-surface px-3 text-content-secondary opacity-60"
+              >
+                Set up
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="rounded-lg border border-border-subtle bg-surface shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle px-5 py-4">
+            <div>
+              <h2 class="nx-h3">Active sessions</h2>
+              <p class="nx-caption mt-1">Where your account is currently signed in.</p>
+            </div>
+            @if (otherSessionCount() > 0) {
+              <button
+                type="button"
+                (click)="revokeOthers()"
+                class="nx-button-text inline-flex h-9 items-center gap-2 rounded-md border border-danger/30 bg-surface px-3 text-danger-text transition-colors hover:bg-danger/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                <nx-icon name="log-out" [size]="16" />
+                Sign out others
+              </button>
+            }
+          </div>
+
+          <ul class="divide-y divide-border-subtle">
+            @for (session of sessions(); track session.id) {
+              <li class="flex flex-wrap items-center gap-3 px-5 py-3.5">
+                <span
+                  class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background text-content-secondary"
+                  aria-hidden="true"
+                >
+                  <nx-icon name="monitor" [size]="18" />
+                </span>
+
+                <span class="min-w-0 flex-1">
+                  <span class="flex flex-wrap items-center gap-x-2">
+                    <span class="nx-body font-medium">{{ session.device }}</span>
+                    @if (session.current) {
+                      <span
+                        class="nx-caption rounded-full bg-success/10 px-2 py-0.5 font-medium text-success-text"
+                      >
+                        This device
+                      </span>
+                    }
+                  </span>
+                  <span class="nx-caption block">
+                    {{ session.location }} · {{ session.lastActive }}
+                  </span>
+                </span>
+
+                @if (!session.current) {
+                  <button
+                    type="button"
+                    (click)="revoke(session)"
+                    class="nx-button-text inline-flex h-9 shrink-0 items-center rounded-md border border-border-subtle bg-surface px-3 transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  >
+                    Revoke
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        </section>
+      </div>
+    }
+  </div>
+
+  <!-- Change password dialog -->
+  @if (passwordOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4" (keydown)="onPasswordKeydown($event)">
+      <button
+        type="button"
+        class="absolute inset-0 cursor-default bg-content/30"
+        (click)="closePasswordDialog()"
+        tabindex="-1"
+        aria-hidden="true"
+      ></button>
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pw-title"
+        class="relative w-full max-w-md rounded-lg border border-border-subtle bg-surface shadow-lg"
+      >
+        <div class="flex items-start justify-between gap-3 border-b border-border-subtle px-5 py-4">
+          <h2 id="pw-title" class="nx-h3">Change password</h2>
+          <button
+            type="button"
+            (click)="closePasswordDialog()"
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            aria-label="Close"
+          >
+            <nx-icon name="close" [size]="18" />
+          </button>
+        </div>
+
+        <form [formGroup]="passwordForm" (ngSubmit)="submitPassword()" novalidate class="px-5 py-5">
+          <p class="nx-caption">
+            Must be at least {{ policy().minPasswordLength }} characters@if (
+              policy().requireSymbols
+            ) {, including a number and a symbol}.
+          </p>
+
+          @if (passwordFormError) {
+            <p role="alert" class="nx-caption mt-3 text-danger-text">{{ passwordFormError }}</p>
+          }
+
+          <div class="mt-4 space-y-4">
+            <div>
+              <label for="pw-current" class="nx-table-header block">Current password</label>
+              <input
+                #passwordFirst
+                id="pw-current"
+                formControlName="current"
+                type="password"
+                autocomplete="current-password"
+                [attr.aria-invalid]="passwordInvalid('current')"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+                [class]="passwordInvalid('current') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+              />
+              @if (passwordInvalid('current')) {
+                <p class="nx-caption mt-1 text-danger-text">{{ passwordError('current') }}</p>
+              }
+            </div>
+
+            <div>
+              <label for="pw-next" class="nx-table-header block">New password</label>
+              <input
+                id="pw-next"
+                formControlName="next"
+                type="password"
+                autocomplete="new-password"
+                [attr.aria-invalid]="passwordInvalid('next')"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+                [class]="passwordInvalid('next') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+              />
+              @if (passwordInvalid('next')) {
+                <p class="nx-caption mt-1 text-danger-text">{{ passwordError('next') }}</p>
+              }
+            </div>
+
+            <div>
+              <label for="pw-confirm" class="nx-table-header block">Confirm new password</label>
+              <input
+                id="pw-confirm"
+                formControlName="confirm"
+                type="password"
+                autocomplete="new-password"
+                [attr.aria-invalid]="passwordInvalid('confirm')"
+                class="nx-body mt-1.5 h-10 w-full rounded-lg border bg-surface px-3 text-content focus:outline-none focus:ring-2"
+                [class]="passwordInvalid('confirm') ? 'border-danger focus:ring-danger/20' : 'border-border-subtle focus:border-primary focus:ring-primary/20'"
+              />
+              @if (passwordInvalid('confirm')) {
+                <p class="nx-caption mt-1 text-danger-text">{{ passwordError('confirm') }}</p>
+              }
+            </div>
+          </div>
+
+          <p class="nx-caption mt-4 rounded-md bg-background px-3 py-2">
+            The rules above are enforced for real, but nothing is saved — there is no
+            authentication backend yet.
+          </p>
+
+          <div class="mt-5 flex justify-end gap-3">
+            <button
+              type="button"
+              (click)="closePasswordDialog()"
+              class="nx-button-text inline-flex h-10 items-center rounded-lg border border-border-subtle bg-surface px-4 text-content transition-colors hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="nx-button-text inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-white transition-colors hover:bg-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <nx-icon name="check" [size]="18" />
+              Update password
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Toast: non-blocking, announced to screen readers -->
+  @if (toast(); as message) {
+    <div
+      role="status"
+      aria-live="polite"
+      class="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-success/25 bg-surface px-4 py-3 shadow-lg"
+    >
+      <span class="shrink-0 text-success-text" aria-hidden="true">
+        <nx-icon name="check" [size]="18" />
+      </span>
+      <p class="nx-body">{{ message }}</p>
+      <button
+        type="button"
+        (click)="dismissToast()"
+        class="flex h-7 w-7 items-center justify-center rounded-md text-content-secondary transition-colors hover:bg-background hover:text-content focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+        aria-label="Dismiss"
+      >
+        <nx-icon name="close" [size]="16" />
+      </button>
+    </div>
+  }
+} @else {
+  <div class="px-4 pb-10 pt-3 sm:px-6">
+    <div
+      class="flex flex-col items-center justify-center rounded-lg border border-border-subtle bg-surface px-6 py-20 text-center"
+    >
+      <span
+        class="flex h-12 w-12 items-center justify-center rounded-xl bg-background text-content-secondary"
+        aria-hidden="true"
+      >
+        <nx-icon name="users" [size]="24" />
+      </span>
+      <h1 class="nx-h2 mt-4">We couldn't load your profile</h1>
+      <p class="nx-body mt-1 max-w-sm text-content-secondary">
+        Your account is not linked to an employee record.
+      </p>
+    </div>
+  </div>
+}
